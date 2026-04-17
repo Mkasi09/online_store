@@ -27,16 +27,16 @@
                                 {% if item.product.image %}
                                     <img src="{{ item.product.image.url }}" alt="{{ item.product.iphone_model.name }}" class="img-fluid rounded">
                                 {% else %}
-                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 80px;">
-                                        <i class="fas fa-mobile-alt fa-2x text-muted"></i>
+                                    <div class="bg-dark rounded d-flex align-items-center justify-content-center" style="height: 80px;">
+                                        <i class="fas fa-mobile-alt fa-2x text-white"></i>
                                     </div>
                                 {% endif %}
                             </div>
                             
                             <div class="col-md-4">
                                 <h6 class="mb-1">{{ item.product.iphone_model.name }}</h6>
-                                <p class="mb-0 text-muted small">
-                                    {{ item.product.color.name }} • {{ item.product.storage }} • {{ item.product.get_condition_display }}
+                                <p class="mb-0 text-dark small">
+                                    {{ item.product.color.name }} • {{ item.product.storage }}
                                 </p>
                                 <p class="mb-0 text-primary fw-bold">R{{ item.product.price }}</p>
                             </div>
@@ -103,7 +103,12 @@
                         
                         <div class="alert alert-success border-success">
                             <i class="fas fa-check-circle me-2"></i>
-                            <strong>FREE Shipping</strong> on all orders! Your order will be delivered within 3-5 business days.
+                            <strong>FREE Shipping</strong> on all orders! 
+                            {% if estimated_delivery_date %}
+                            Estimated delivery by <strong>{{ estimated_delivery_date|date:"F j, Y" }}</strong> (excluding weekends).
+                            {% else %}
+                            Your order will be delivered within 3-5 business days.
+                            {% endif %}
                         </div>
                         
                         <div class="d-grid gap-2">
@@ -115,7 +120,7 @@
                             <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#loginModal">
                                 <i class="fas fa-sign-in-alt me-2"></i>Login to Checkout
                             </button>
-                            <small class="text-muted d-block text-center mt-2">
+                            <small class="text-center mt-2">
                                 Please login or create an account to proceed with checkout
                             </small>
                             {% endif %}
@@ -160,9 +165,9 @@
         <div class="row">
             <div class="col-12">
                 <div class="text-center py-5">
-                    <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
+                    <i class="fas fa-shopping-cart fa-4x text-dark mb-4"></i>
                     <h3>Your cart is empty</h3>
-                    <p class="text-muted mb-4">Looks like you haven't added any iPhones to your cart yet.</p>
+                    <p class="text-dark mb-4">Looks like you haven't added any iPhones to your cart yet.</p>
                     <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-lg">
                         <i class="fas fa-shopping-bag me-2"></i>Start Shopping
                     </a>
@@ -178,7 +183,7 @@
 }
 
 .cart-item:hover {
-    background-color: #f8f9fa;
+    background-color: #ffffff;
 }
 
 .input-group-sm .form-control {
@@ -202,30 +207,30 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="checkoutForm">
+                <form id="checkoutForm" action="{% url 'store:checkout' %}" method="POST">
                     {% csrf_token %}
                     <div class="row">
                         <!-- Shipping Information -->
                         <div class="col-md-6">
                             <h6 class="text-primary mb-3">Shipping Information</h6>
                             <div class="mb-3">
-                                <label for="shipping_street" class="form-label text-muted">Street Address *</label>
-                                <input type="text" class="form-control bg-secondary text-white border-secondary" id="shipping_street" name="shipping_street" placeholder="123 Main Street, Apartment 4B" required>
+                                <label for="shipping_street" class="form-label text-dark">Street Address *</label>
+                                <input type="text" class="form-control bg-dark text-white border-dark" id="shipping_street" name="shipping_street" placeholder="123 Main Street, Apartment 4B" required>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="shipping_town" class="form-label text-muted">Town / Suburb *</label>
-                                    <input type="text" class="form-control bg-secondary text-white border-secondary" id="shipping_town" name="shipping_town" placeholder="Sandton" required>
+                                    <label for="shipping_town" class="form-label text-dark">Town / Suburb *</label>
+                                    <input type="text" class="form-control bg-dark text-white border-dark" id="shipping_town" name="shipping_town" placeholder="Sandton" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="shipping_city" class="form-label text-muted">City *</label>
-                                    <input type="text" class="form-control bg-secondary text-white border-secondary" id="shipping_city" name="shipping_city" placeholder="Johannesburg" required>
+                                    <label for="shipping_city" class="form-label text-dark">City *</label>
+                                    <input type="text" class="form-control bg-dark text-white border-dark" id="shipping_city" name="shipping_city" placeholder="Johannesburg" required>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="shipping_province" class="form-label text-muted">Province *</label>
-                                    <select class="form-control bg-secondary text-white border-secondary" id="shipping_province" name="shipping_province" required>
+                                    <label for="shipping_province" class="form-label text-dark">Province *</label>
+                                    <select class="form-control bg-dark text-white border-dark" id="shipping_province" name="shipping_province" required>
                                         <option value="">Select Province</option>
                                         <option value="Eastern Cape">Eastern Cape</option>
                                         <option value="Free State">Free State</option>
@@ -239,13 +244,13 @@
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="shipping_postal" class="form-label text-muted">Postal Code *</label>
-                                    <input type="text" class="form-control bg-secondary text-white border-secondary" id="shipping_postal" name="shipping_postal" placeholder="2196" pattern="[0-9]{4}" maxlength="4" required>
+                                    <label for="shipping_postal" class="form-label text-dark">Postal Code *</label>
+                                    <input type="text" class="form-control bg-dark text-white border-dark" id="shipping_postal" name="shipping_postal" placeholder="2196" pattern="[0-9]{4}" maxlength="4" required>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="phone" class="form-label text-muted">Phone Number</label>
-                                <input type="tel" class="form-control bg-secondary text-white border-secondary" id="phone" name="phone" placeholder="082 123 4567">
+                                <label for="phone" class="form-label text-dark">Phone Number</label>
+                                <input type="tel" class="form-control bg-dark text-white border-dark" id="phone" name="phone" placeholder="082 123 4567">
                             </div>
                         </div>
                         <!-- Billing Information -->
@@ -253,27 +258,27 @@
                             <h6 class="text-primary mb-3">Billing Information</h6>
                             <div class="mb-3 form-check">
                                 <input type="checkbox" class="form-check-input" id="sameAsShipping" name="same_as_shipping">
-                                <label class="form-check-label text-muted" for="sameAsShipping">Billing address is same as shipping address</label>
+                                <label class="form-check-label text-dark" for="sameAsShipping">Billing address is same as shipping address</label>
                             </div>
                             <div id="billingAddressContainer">
                                 <div class="mb-3">
-                                    <label for="billing_street" class="form-label text-muted">Street Address *</label>
-                                    <input type="text" class="form-control bg-secondary text-white border-secondary" id="billing_street" name="billing_street" placeholder="123 Main Street, Apartment 4B" required>
+                                    <label for="billing_street" class="form-label text-dark">Street Address *</label>
+                                    <input type="text" class="form-control bg-dark text-white border-dark" id="billing_street" name="billing_street" placeholder="123 Main Street, Apartment 4B" required>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="billing_town" class="form-label text-muted">Town / Suburb *</label>
-                                        <input type="text" class="form-control bg-secondary text-white border-secondary" id="billing_town" name="billing_town" placeholder="Sandton" required>
+                                        <label for="billing_town" class="form-label text-dark">Town / Suburb *</label>
+                                        <input type="text" class="form-control bg-dark text-white border-dark" id="billing_town" name="billing_town" placeholder="Sandton" required>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="billing_city" class="form-label text-muted">City *</label>
-                                        <input type="text" class="form-control bg-secondary text-white border-secondary" id="billing_city" name="billing_city" placeholder="Johannesburg" required>
+                                        <label for="billing_city" class="form-label text-dark">City *</label>
+                                        <input type="text" class="form-control bg-dark text-white border-dark" id="billing_city" name="billing_city" placeholder="Johannesburg" required>
                                     </div>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="billing_province" class="form-label text-muted">Province *</label>
-                                        <select class="form-control bg-secondary text-white border-secondary" id="billing_province" name="billing_province" required>
+                                        <label for="billing_province" class="form-label text-dark">Province *</label>
+                                        <select class="form-control bg-dark text-white border-dark" id="billing_province" name="billing_province" required>
                                             <option value="">Select Province</option>
                                             <option value="Eastern Cape">Eastern Cape</option>
                                             <option value="Free State">Free State</option>
@@ -287,24 +292,29 @@
                                         </select>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="billing_postal" class="form-label text-muted">Postal Code *</label>
-                                        <input type="text" class="form-control bg-secondary text-white border-secondary" id="billing_postal" name="billing_postal" placeholder="2196" pattern="[0-9]{4}" maxlength="4" required>
+                                        <label for="billing_postal" class="form-label text-dark">Postal Code *</label>
+                                        <input type="text" class="form-control bg-dark text-white border-dark" id="billing_postal" name="billing_postal" placeholder="2196" pattern="[0-9]{4}" maxlength="4" required>
                                     </div>
                                 </div>
                             </div>
                             <div class="mb-3">
-                                <label for="email" class="form-label text-muted">Email Address *</label>
-                                <input type="email" class="form-control bg-secondary text-white border-secondary" id="email" name="email" value="{{ user.email }}" required>
+                                <label for="email" class="form-label text-dark">Email Address *</label>
+                                <input type="email" class="form-control bg-dark text-white border-dark" id="email" name="email" value="{{ user.email }}" required>
                             </div>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="notes" class="form-label text-muted">Order Notes (Optional)</label>
-                        <textarea class="form-control bg-secondary text-white border-secondary" id="notes" name="notes" rows="2" placeholder="Special instructions for your order..."></textarea>
+                        <label for="notes" class="form-label text-dark">Order Notes (Optional)</label>
+                        <textarea class="form-control bg-dark text-white border-dark" id="notes" name="notes" rows="2" placeholder="Special instructions for your order..."></textarea>
                     </div>
                     <div class="alert alert-success border-success text-white">
                         <i class="fas fa-truck me-2"></i>
-                        <strong>FREE Shipping</strong> on all orders! Estimated delivery: 3-5 business days.
+                        <strong>FREE Shipping</strong> on all orders!
+                        {% if estimated_delivery_date %}
+                        Estimated delivery by <strong>{{ estimated_delivery_date|date:"F j, Y" }}</strong> (excluding weekends).
+                        {% else %}
+                        Estimated delivery: 3-5 business days.
+                        {% endif %}
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg" id="placeOrderBtn">

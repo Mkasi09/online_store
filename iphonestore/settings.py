@@ -25,7 +25,10 @@ SECRET_KEY = 'django-insecure-^y^zrsl4y!vkb8%5$lonqh%ots2*wrqt#t-6w@o^pm88=mt#7^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.10.21.240', '127.0.0.1', 'localhost', '*']
+ALLOWED_HOSTS = ['10.10.21.240', '127.0.0.1','10.10.19.163', 'localhost', '*', 'beb5-102-132-150-131.ngrok-free.app', 'd217-102-132-150-131.ngrok-free.app']
+
+# CSRF Trusted Origins for ngrok
+CSRF_TRUSTED_ORIGINS = ['https://d217-102-132-150-131.ngrok-free.app', 'https://beb5-102-132-150-131.ngrok-free.app']
 
 # Authentication settings
 LOGIN_URL = 'store:login'
@@ -137,18 +140,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # PayFast Payment Gateway Configuration
 # =====================================
 # Mode: 'sandbox' for testing, 'live' for production
-PAYFAST_MODE = 'sandbox'
+PAYFAST_MODE = 'live'
 
 # Merchant Credentials (Replace with your actual PayFast credentials)
 # Get these from your PayFast account dashboard
-PAYFAST_MERCHANT_ID = '10000100'  # Sandbox test merchant ID
-PAYFAST_MERCHANT_KEY = '46f0cd694581a'  # Sandbox test merchant key
+PAYFAST_MERCHANT_ID = '34493313'  # Live merchant ID
+PAYFAST_MERCHANT_KEY = 'wfr3ovxbihvsv'  # Live merchant key
 
 # Optional: Passphrase for additional security (set in PayFast account settings)
 PAYFAST_PASSPHRASE = ''  # Leave empty if not configured
-
-# IMPORTANT: For production, change PAYFAST_MODE to 'live' and use your real credentials:
-# PAYFAST_MODE = 'live'
-# PAYFAST_MERCHANT_ID = 'your_live_merchant_id'
-# PAYFAST_MERCHANT_KEY = 'your_live_merchant_key'
-# PAYFAST_PASSPHRASE = 'your_passphrase_if_configured'

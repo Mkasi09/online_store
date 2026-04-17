@@ -33,7 +33,13 @@
                 <h1 class="display-5 fw-bold mb-3">{{ product.iphone_model.name }}</h1>
                 
                 <div class="d-flex align-items-center mb-3">
-                    <span class="badge bg-primary me-2">{{ product.get_condition_display }}</span>
+                    <span class="badge 
+                        {% if product.condition == 'new' %}bg-primary
+                        {% elif product.condition == 'refurbished' %}bg-info
+                        {% else %}bg-secondary{% endif %} me-2 fs-6">
+                        {{ product.get_condition_display }}
+                        {% if product.grade %} - Grade {{ product.get_grade_display }}{% endif %}
+                    </span>
                     {% if product.stock_quantity > 0 %}
                         <span class="badge bg-success">In Stock ({{ product.stock_quantity }} available)</span>
                     {% else %}
@@ -41,8 +47,69 @@
                     {% endif %}
                 </div>
 
+                <!-- Condition Information Card -->
+                <div class="card mb-4 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% if product.condition == 'new' %}
+                                Brand New iPhone
+                            {% elif product.condition == 'refurbished' %}
+                                Refurbished iPhone
+                            {% else %}
+                                Used iPhone
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if product.condition == 'new' %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Condition:</strong> <span class="text-primary">Brand New</span></p>
+                                    <p class="mb-2"><strong>Warranty:</strong> Full Manufacturer Warranty</p>
+                                    <p class="mb-2"><strong>Box Contents:</strong> Complete with all accessories</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Battery:</strong> 100% Health</p>
+                                    <p class="mb-2"><strong>Condition:</strong> Factory Sealed</p>
+                                    <p class="mb-2"><strong>Returns:</strong> 30-day return policy</p>
+                                </div>
+                            </div>
+                        {% elif product.condition == 'refurbished' %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Condition:</strong> <span class="text-info">Professionally Refurbished</span></p>
+                                    <p class="mb-2"><strong>Grade:</strong> <span class="badge bg-info">{{ product.get_grade_display }}</span></p>
+                                    <p class="mb-2"><strong>Warranty:</strong> 12-month warranty</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Battery:</strong> 85%+ Health</p>
+                                    <p class="mb-2"><strong>Testing:</strong> Fully tested and certified</p>
+                                    <p class="mb-2"><strong>Appearance:</strong> Like new to excellent</p>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Condition:</strong> <span class="text-secondary">Used</span></p>
+                                    <p class="mb-2"><strong>Grade:</strong> <span class="badge bg-secondary">{{ product.get_grade_display }}</span></p>
+                                    <p class="mb-2"><strong>Warranty:</strong> 6-month warranty</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-2"><strong>Battery:</strong> 80%+ Health</p>
+                                    <p class="mb-2"><strong>Testing:</strong> Functionally tested</p>
+                                    <p class="mb-2"><strong>Appearance:</strong> Good condition with normal wear</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <div class="mb-4">
                     <h2 class="text-primary fw-bold">R{{ product.price }}</h2>
+                    {% if product.condition != 'new' %}
+                        <small class="text-muted">Save up to 40% compared to new</small>
+                    {% endif %}
                 </div>
 
                 <!-- Storage Size Selector -->
@@ -72,7 +139,7 @@
                             <a href="{% url 'store:product_detail' variant.pk %}" 
                                class="btn {% if variant.pk == product.pk %}btn-primary{% else %}btn-outline-primary{% endif %}">
                                 <span class="color-dot me-2" 
-                                      style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background-color: {{ variant.color.hex_code }}; border: 2px solid #fff; box-shadow: 0 0 0 1px #ddd;"></span>
+                                      data-color="{{ variant.color.hex_code }}"></span>
                                 {{ variant.color.name }}
                                 {% if variant.stock_quantity <= 0 %}
                                     <span class="badge bg-danger ms-1">Out of Stock</span>
@@ -165,7 +232,7 @@
                             <h6 class="card-title">{{ related_product.iphone_model.name }}</h6>
                             <p class="card-text">
                                 <small class="text-muted">
-                                    {{ related_product.color.name }} • {{ related_product.storage }} • {{ related_product.get_condition_display }}
+                                    {{ related_product.color.name }} • {{ related_product.storage }}
                                 </small>
                             </p>
                             <div class="mt-auto">
@@ -206,6 +273,15 @@
 
 .product-card:hover .card-img-top {
     transform: none;
+}
+
+.color-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 1px #ddd;
 }
 
 /* Clickable card styles */

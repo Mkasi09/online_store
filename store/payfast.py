@@ -40,93 +40,32 @@ class PayFastConfig:
         """Get passphrase from settings (optional but recommended)"""
         return getattr(settings, 'PAYFAST_PASSPHRASE', '')
 
-
 class PayFastPayment:
-    """PayFast payment handler"""
-    
     def __init__(self, order, request):
         self.order = order
         self.request = request
-        self.config = PayFastConfig()
-    
-    def get_callback_urls(self):
-        """Generate return, cancel and notify URLs"""
-        # Build absolute URIs
-        return_url = self.request.build_absolute_uri(
-            reverse('store:payment_success')
-        )
-        cancel_url = self.request.build_absolute_uri(
-            reverse('store:payment_cancel')
-        )
-        notify_url = self.request.build_absolute_uri(
-            reverse('store:payment_notify')
-        )
-        
-        return {
-            'return_url': return_url,
-            'cancel_url': cancel_url,
-            'notify_url': notify_url,
-        }
-    
-    def get_payment_data(self):
-        """Generate PayFast payment form data"""
-        order = self.order
-        
-        # Ensure amount has exactly 2 decimal places
-        amount = f"{float(order.total_amount):.2f}"
-        
-        # Build payment data
-        data = {
-            'merchant_id': self.config.get_merchant_id(),
-            'merchant_key': self.config.get_merchant_key(),
-            'return_url': self.get_callback_urls()['return_url'],
-            'cancel_url': self.get_callback_urls()['cancel_url'],
-            'notify_url': self.get_callback_urls()['notify_url'],
-            'name_first': order.user.first_name if order.user and order.user.first_name else 'Customer',
-            'name_last': order.user.last_name if order.user and order.user.last_name else '',
-            'email_address': order.email,
-            'm_payment_id': str(order.id),  # Our internal order ID
-            'amount': amount,
-            'item_name': f'Order {order.order_number} - iPhone Store',
-            'item_description': f'Purchase of iPhone products - Order #{order.order_number}',
-            'custom_int1': str(order.get_item_count()) if hasattr(order, 'get_item_count') else '1',
-            'custom_str1': order.order_number,
-        }
-        
-        # Remove empty values
-        data = {k: v for k, v in data.items() if v}
-        
-        return data
-    
-    def generate_signature(self, data):
-        """Generate PayFast signature for data verification"""
-        # Sort parameters alphabetically
-        sorted_params = sorted(data.items())
-        
-        # Build parameter string
-        param_string = '&'.join([f'{k}={urllib.parse.quote(str(v), safe="")}' 
-                                 for k, v in sorted_params])
-        
-        # Add passphrase if configured
-        passphrase = self.config.get_passphrase()
-        if passphrase:
-            param_string += f'&passphrase={urllib.parse.quote(passphrase, safe="")}'
-        
-        # Generate MD5 hash
-        signature = hashlib.md5(param_string.encode()).hexdigest()
-        
-        return signature
-    
-    def get_payment_form(self):
-        """Get complete payment form data with signature"""
-        data = self.get_payment_data()
-        data['signature'] = self.generate_signature(data)
-        
-        return {
-            'action_url': self.config.get_process_url(),
-            'fields': data
-        }
 
+    def get_payment_form(self):
+        config = PayFastConfig()
+        request = self.request
+        domain = request.get_host()
+        scheme = 'https' if request.is_secure() else 'http'
+        base_url = f"{scheme}://{domain}"
+        
+        return f"""
+        <form action="{config.get_process_url()}" method="post" id="payfast-form">
+            <input type="hidden" name="merchant_id" value="{config.get_merchant_id()}">
+            <input type="hidden" name="merchant_key" value="{config.get_merchant_key()}">
+            
+            <input type="hidden" name="return_url" value="{base_url}/payment/success/">
+            <input type="hidden" name="cancel_url" value="{base_url}/payment/cancel/">
+            <input type="hidden" name="notify_url" value="{base_url}/payment/notify/">
+            
+            <input type="hidden" name="amount" value="{self.order.total_amount}">
+            <input type="hidden" name="item_name" value="Order #{self.order.id}">
+            <input type="hidden" name="email_address" value="{self.order.email}">
+        </form>
+        """
 
 def verify_payfast_signature(data, signature):
     """

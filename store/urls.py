@@ -20,11 +20,10 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('profile/update/', views.update_profile, name='update_profile'),
     
-    # Order and Tracking URLs
+    # Order URLs
     path('checkout/', views.checkout, name='checkout'),
     path('orders/', views.order_list, name='order_list'),
     path('order/<uuid:order_id>/', views.order_detail, name='order_detail'),
-    path('track/', views.track_order, name='track_order'),
     
     # PayFast Payment URLs
     path('payment/redirect/', views.payment_redirect, name='payment_redirect'),
@@ -34,4 +33,5 @@ urlpatterns = [
     
     # Debug URL
     path('checkout/debug/', views.checkout_debug, name='checkout_debug'),
+    path('payment/debug/', views.payment_debug, name='payment_debug'),
 ]

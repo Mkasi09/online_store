@@ -1,46 +1,21 @@
-{% extends 'store/base.html' %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Redirecting to Payment...</title>
+</head>
+<body>
+    <h3>Redirecting to secure payment...</h3>
+    <p>Please wait, do not refresh.</p>
 
-{% block title %}Processing Payment - iPhone Store{% endblock %}
-
-{% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 text-center">
-            <div class="card bg-dark text-white border-secondary">
-                <div class="card-body p-5">
-                    <div class="mb-4">
-                        <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
-                    </div>
-                    <h2 class="fw-bold mb-3">Processing Your Payment</h2>
-                    <p class="text-muted mb-4">
-                        You will be redirected to PayFast's secure payment page to complete your purchase.
-                    </p>
-                    <div class="alert alert-info border-info">
-                        <i class="fas fa-lock me-2"></i>
-                        <strong>Secure Connection</strong><br>
-                        <small>Order #{{ order.order_number }} | Amount: R{{ order.total_amount }}</small>
-                    </div>
-                    <p class="text-muted small mt-4">
-                        If you are not redirected automatically, please click the button below.
-                    </p>
-                    <form id="payfastForm" action="{{ payment_form.action_url }}" method="POST">
-                        {% for field, value in payment_form.fields.items %}
-                            <input type="hidden" name="{{ field }}" value="{{ value }}">
-                        {% endfor %}
-                        <button type="submit" class="btn btn-primary btn-lg mt-3">
-                            <i class="fas fa-credit-card me-2"></i>Proceed to Payment
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
+    <!-- PayFast Form -->
+    <div style="display:none;">
+        {{ payment_form|safe }}
     </div>
-</div>
 
-<script>
-    // Auto-submit the form after a brief delay to show the processing message
-    setTimeout(function() {
-        document.getElementById('payfastForm').submit();
-    }, 2000);
-</script>
-{% endblock %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.forms[0].submit();
+        });
+    </script>
+</body>
+</html>

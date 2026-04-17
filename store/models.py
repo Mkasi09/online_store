@@ -6,7 +6,22 @@ from django.contrib.auth.models import User
 
 import uuid
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
+
+
+
+class PendingOrder(models.Model):
+    """Store pending order data before payment confirmation"""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    order_data = models.JSONField()
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    email = models.EmailField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_processed = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'store_pending_order'
 
 
 
@@ -407,18 +422,18 @@ class Order(models.Model):
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     # Shipping Address Fields
-    shipping_street = models.CharField(max_length=255)
-    shipping_town = models.CharField(max_length=100)
-    shipping_city = models.CharField(max_length=100)
-    shipping_province = models.CharField(max_length=100)
-    shipping_postal = models.CharField(max_length=10)
+    shipping_street = models.CharField(max_length=255, default='')
+    shipping_town = models.CharField(max_length=100, default='')
+    shipping_city = models.CharField(max_length=100, default='')
+    shipping_province = models.CharField(max_length=100, default='')
+    shipping_postal = models.CharField(max_length=10, default='')
 
     # Billing Address Fields
-    billing_street = models.CharField(max_length=255)
-    billing_town = models.CharField(max_length=100)
-    billing_city = models.CharField(max_length=100)
-    billing_province = models.CharField(max_length=100)
-    billing_postal = models.CharField(max_length=10)
+    billing_street = models.CharField(max_length=255, default='')
+    billing_town = models.CharField(max_length=100, default='')
+    billing_city = models.CharField(max_length=100, default='')
+    billing_province = models.CharField(max_length=100, default='')
+    billing_postal = models.CharField(max_length=10, default='')
 
     # Legacy fields for backward compatibility
     shipping_address = models.TextField(blank=True)
@@ -447,6 +462,12 @@ class Order(models.Model):
     pf_amount_net = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
 
     pf_payment_date = models.DateTimeField(null=True, blank=True)
+
+    estimated_delivery_date = models.DateField(null=True, blank=True, help_text="Estimated delivery date (excluding weekends)")
+
+    shipping_tracking = models.CharField(max_length=100, blank=True, null=True, help_text="Shipping tracking number")
+
+    shipping_update = models.TextField(blank=True, help_text="Shipping status updates")
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -486,6 +507,56 @@ class Order(models.Model):
 
 
 
+    def calculate_estimated_delivery(self, business_days=5):
+
+        """
+
+        Calculate estimated delivery date excluding weekends.
+
+        business_days: Number of business days to add (default: 5)
+
+        """
+
+        if self.created_at:
+
+            start_date = self.created_at.date()
+
+            days_added = 0
+
+            current_date = start_date
+
+            
+
+            while days_added < business_days:
+
+                current_date += timedelta(days=1)
+
+                # Skip weekends (Saturday=5, Sunday=6)
+
+                if current_date.weekday() < 5:
+
+                    days_added += 1
+
+            
+
+            return current_date
+
+        return None
+
+
+
+    def save(self, *args, **kwargs):
+
+        # Auto-calculate estimated delivery date if not set
+
+        if not self.estimated_delivery_date and self.created_at:
+
+            self.estimated_delivery_date = self.calculate_estimated_delivery()
+
+        super().save(*args, **kwargs)
+
+
+
 class OrderItem(models.Model):
 
     """Individual items in an order"""
@@ -516,89 +587,4 @@ class OrderItem(models.Model):
 
         unique_together = ['order', 'product']
 
-
-
-class ShippingTracking(models.Model):
-
-    """Shipping tracking information"""
-
-    order = models.OneToOneField(Order, on_delete=models.CASCADE)
-
-    tracking_number = models.CharField(max_length=100, unique=True)
-
-    carrier = models.CharField(max_length=100)
-
-    shipped_date = models.DateTimeField(null=True, blank=True)
-
-    estimated_delivery = models.DateTimeField(null=True, blank=True)
-
-    delivered_date = models.DateTimeField(null=True, blank=True)
-
-    current_status = models.CharField(max_length=100, default='In Transit')
-
-    tracking_url = models.URLField(blank=True)
-
-    notes = models.TextField(blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    updated_at = models.DateTimeField(auto_now=True)
-
-    
-
-    def __str__(self):
-
-        return f"Tracking for {self.order.order_number}"
-
-    
-
-    def get_tracking_link(self):
-
-        if self.tracking_url:
-
-            return self.tracking_url
-
-        # Generate generic tracking links based on carrier
-
-        carrier_links = {
-
-            'FedEx': f'https://www.fedex.com/fedextrack/?trknbr={self.tracking_number}',
-
-            'UPS': f'https://www.ups.com/track?tracknum={self.tracking_number}',
-
-            'USPS': f'https://tools.usps.com/go/TrackConfirmAction_input?qtc_tLabels1={self.tracking_number}',
-
-            'DHL': f'https://www.dhl.com/en/express/tracking.html?AWB={self.tracking_number}',
-
-        }
-
-        return carrier_links.get(self.carrier, f'https://www.google.com/search?q={self.tracking_number}+tracking')
-
-
-
-class ShippingUpdate(models.Model):
-
-    """Individual shipping updates"""
-
-    tracking = models.ForeignKey(ShippingTracking, on_delete=models.CASCADE, related_name='updates')
-
-    status = models.CharField(max_length=200)
-
-    location = models.CharField(max_length=200, blank=True)
-
-    timestamp = models.DateTimeField()
-
-    description = models.TextField(blank=True)
-
-    
-
-    def __str__(self):
-
-        return f"Update for {self.tracking.order.order_number}: {self.status}"
-
-    
-
-    class Meta:
-
-        ordering = ['-timestamp']
 

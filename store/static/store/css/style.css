@@ -26,7 +26,7 @@ body {
 }
 
 .text-muted {
-    color: #6c757d !important;
+    color: #000000 !important;
 }
 
 /* Navigation */
@@ -95,11 +95,11 @@ body {
 }
 
 .form-control::placeholder {
-    color: #6c757d !important;
+    color: #000000 !important;
 }
 
 .form-label {
-    color: #495057 !important;
+    color: #000000 !important;
     font-weight: 500;
 }
 
@@ -169,7 +169,7 @@ body {
     border: none;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    background-color: #6c757d;
+    background-color: #ffffff;
 }
 
 .product-card:hover {
@@ -193,7 +193,7 @@ body {
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
-    background-color: #6c757d;
+    background-color: #ffffff;
 }
 
 .card:hover {
@@ -254,7 +254,7 @@ footer a:hover {
 }
 
 .product-list-item:hover {
-    background-color: #f7f7f7;
+    background-color: #ffffff;
 }
 
 /* Cart Styles */
@@ -263,7 +263,7 @@ footer a:hover {
 }
 
 .cart-item:hover {
-    background-color: #f7f7f7;
+    background-color: #ffffff;
 }
 
 /* Quantity Input */
@@ -309,7 +309,7 @@ footer a:hover {
 
 .breadcrumb-item + .breadcrumb-item::before {
     content: ">";
-    color: #b0b0b0;
+    color: #000000;
 }
 
 /* Pagination */
@@ -424,6 +424,81 @@ footer a:hover {
     
     .modal-dialog {
         margin: 1rem;
+    }
+    
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        font-size: 1.2rem;
+    }
+    
+    .navbar-brand img {
+        height: 50px !important;
+        margin-right: 8px;
+    }
+}
+
+/* Mobile Navigation Styles */
+.mobile-user-menu .btn-link {
+    text-decoration: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+}
+
+.mobile-user-menu .btn-link:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 0.375rem;
+}
+
+.mobile-menu-items {
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    margin-left: auto;
+    margin-right: 0;
+    border-radius: 0.5rem !important;
+    text-align: right;
+}
+
+.mobile-menu-items .dropdown-item {
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
+    transition: all 0.3s ease;
+    margin: 0.25rem 0;
+}
+
+.mobile-menu-items .dropdown-item:hover {
+    background-color: #007bff !important;
+    transform: translateX(-5px);
+}
+
+.mobile-menu-items .dropdown-divider {
+    margin: 0.5rem 0;
+    opacity: 0.5;
+}
+
+/* Mobile Accordion Animation */
+.mobile-user-menu .collapse {
+    transition: all 0.3s ease-in-out;
+}
+
+.mobile-user-menu .collapsing {
+    transition: height 0.3s ease-in-out;
+}
+
+/* Mobile Navigation Improvements */
+@media (max-width: 991.98px) {
+    .navbar-nav {
+        padding-top: 1rem;
+    }
+    
+    .mobile-user-menu {
+        width: 100%;
+    }
+    
+    .mobile-menu-items {
+        margin-left: 0;
+        margin-right: 0;
     }
 }
 

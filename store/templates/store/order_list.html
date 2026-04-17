@@ -3,10 +3,10 @@
 {% block title %}My Orders - iPhone Store{% endblock %}
 
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
     <div class="row">
         <div class="col-12">
-            <h1 class="display-5 fw-bold mb-4">
+            <h1 class="h3 mb-4">
                 <i class="fas fa-shopping-bag me-2"></i>My Orders
             </h1>
         </div>
@@ -15,72 +15,50 @@
     {% if orders %}
     <div class="row">
         {% for order in orders %}
-        <div class="col-12 mb-4">
-            <div class="card shadow">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0">Order #{{ order.order_number }}</h5>
-                        <small class="text-muted">Placed on {{ order.created_at|date:"F j, Y" }}</small>
-                    </div>
-                    <div>
-                        <span class="badge bg-{{ order.status|default:'secondary' }}">
-                            {{ order.get_status_display }}
-                        </span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h6 class="text-primary mb-3">Order Items</h6>
-                            {% for item in order.get_items %}
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div>
-                                    <strong>{{ item.product.iphone_model.name }}</strong>
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ item.product.color.name }} • {{ item.product.storage }} • {{ item.product.get_condition_display }}
-                                    </small>
-                                </div>
-                                <div class="text-end">
-                                    <div>{{ item.quantity }} x R{{ item.price }}</div>
-                                    <strong>R{{ item.get_total_price }}</strong>
-                                </div>
+        <div class="col-12 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            {% with first_item=order.get_items|first %}
+                                {% if first_item.product.cover_photo %}
+                                    <img src="{{ first_item.product.cover_photo.url }}" alt="{{ first_item.product.iphone_model.name }}" class="img-fluid rounded" style="max-height: 60px; object-fit: cover;">
+                                {% elif first_item.product.image %}
+                                    <img src="{{ first_item.product.image.url }}" alt="{{ first_item.product.iphone_model.name }}" class="img-fluid rounded" style="max-height: 60px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 60px; width: 60px;">
+                                        <i class="fas fa-mobile-alt text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex flex-column">
+                                <strong class="text-primary">#{{ order.order_number }}</strong>
+                                <small class="text-muted">{{ order.created_at|date:"M j, Y" }}</small>
+                                <span class="badge {% if order.status == 'pending_payment' %}bg-warning{% elif order.status == 'paid' %}bg-info{% elif order.status == 'processing' %}bg-primary{% elif order.status == 'shipped' %}bg-success{% elif order.status == 'delivered' %}bg-success{% elif order.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %} mt-2" style="width: fit-content;">
+                                    {{ order.get_status_display }}
+                                </span>
                             </div>
-                            {% endfor %}
                         </div>
                         <div class="col-md-4">
-                            <h6 class="text-primary mb-3">Order Summary</h6>
-                            <div class="mb-2">
-                                <div class="d-flex justify-content-between">
-                                    <span>Subtotal ({{ order.get_item_count }} items)</span>
-                                    <span>R{{ order.total_amount }}</span>
+                            <div class="small">
+                                {% for item in order.get_items %}
+                                <div class="mb-1">
+                                    {{ item.quantity }}x {{ item.product.iphone_model.name }}
+                                    <span class="text-muted">({{ item.product.color.name }})</span>
                                 </div>
-                                <div class="d-flex justify-content-between text-success">
-                                    <span><i class="fas fa-truck me-1"></i>Shipping</span>
-                                    <span>FREE</span>
-                                </div>
-                                <hr>
-                                <div class="d-flex justify-content-between">
-                                    <strong>Total</strong>
-                                    <strong class="text-primary">R{{ order.total_amount }}</strong>
-                                </div>
+                                {% endfor %}
                             </div>
-                            
-                            <div class="mt-3">
-                                <h6 class="text-primary mb-2">Shipping Address</h6>
-                                <p class="text-muted small">{{ order.shipping_address|linebreaks }}</p>
-                            </div>
-                            
-                            <div class="d-grid gap-2 mt-3">
-                                <a href="{% url 'store:order_detail' order.id %}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-eye me-2"></i>View Details
-                                </a>
-                                {% if order.shippingtracking %}
-                                <a href="{% url 'store:track_order %}?tracking_number={{ order.shippingtracking.tracking_number }}" class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-shipping-fast me-2"></i>Track Order
-                                </a>
-                                {% endif %}
-                            </div>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <strong class="text-primary">R{{ order.total_amount }}</strong>
+                            <div class="small text-muted">{{ order.get_item_count }} item{% if order.get_item_count != 1 %}s{% endif %}</div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <a href="{% url 'store:order_detail' order.id %}" class="btn btn-outline-primary btn-sm">
+                                View Details
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -90,54 +68,14 @@
     </div>
     {% else %}
     <div class="text-center py-5">
-        <i class="fas fa-shopping-bag fa-4x text-muted mb-4"></i>
-        <h3>No orders yet</h3>
-        <p class="text-muted mb-4">You haven't placed any orders yet. Start shopping to see your orders here.</p>
-        <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-lg">
-            <i class="fas fa-shopping-bag me-2"></i>Start Shopping
+        <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
+        <h4>No orders yet</h4>
+        <p class="text-muted mb-4">Start shopping to see your orders here.</p>
+        <a href="{% url 'store:product_list' %}" class="btn btn-primary">
+            Start Shopping
         </a>
     </div>
     {% endif %}
 </div>
 
-<style>
-.card {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-}
-
-.card-header {
-    border-radius: 15px 15px 0 0 !important;
-}
-
-.btn {
-    border-radius: 25px;
-    padding: 8px 20px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-}
-
-.btn-primary {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    border: none;
-}
-
-.btn-primary:hover {
-    background: linear-gradient(45deg, #0056b3, #004085);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
-}
-
-.badge {
-    font-size: 0.75rem;
-    padding: 5px 10px;
-    border-radius: 15px;
-}
-</style>
 {% endblock %}

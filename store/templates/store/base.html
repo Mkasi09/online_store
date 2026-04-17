@@ -19,28 +19,39 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-black border-bottom border-secondary">
         <div class="container">
+            <a class="navbar-brand fw-bold text-white" href="{% url 'store:home' %}">
+                <i> <img src="{% static 'store/img/iphonestore1.png' %}" alt="iPhone Logo" height="80"></i>iPhone Store
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <a class="navbar-brand fw-bold text-white" href="{% url 'store:home' %}">
-                <i> <img src="{% static 'store/img/iphonestore1.png' %}" alt="iPhone Logo" height="80" class="me-2"></i>iPhone Store
-            </a>
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link text-white hover-primary" href="{% url 'store:home' %}">Home</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white hover-primary" href="{% url 'store:product_list' %}">All iPhones</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-white hover-primary" href="{% url 'store:track_order' %}">
-                            <i class="fas fa-shipping-fast me-1"></i>Track Order
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white hover-primary" href="#" role="button" data-bs-toggle="dropdown">
+                            iPhones
                         </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}">
+                                <i class="fas fa-mobile-alt me-2"></i>All iPhones
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=new">
+                                <i class="fas fa-star me-2"></i>Brand New
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=refurbished">
+                                <i class="fas fa-recycle me-2"></i>Refurbished
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=used">
+                                <i class="fas fa-handshake me-2"></i>Used
+                            </a></li>
+                        </ul>
                     </li>
                     {% if user.is_authenticated and user.is_staff %}
-                    <li class="nav-item">
+                    <li class="nav-item d-lg-none">
                         <a class="nav-link text-white hover-primary" href="{% url 'admin:index' %}" target="_blank">
                             <i class="fas fa-cog me-1"></i>Admin
                         </a>
@@ -57,13 +68,17 @@
                     </li>
                     
                     {% if user.is_authenticated %}
-                    <li class="nav-item dropdown">
+                    <!-- Desktop Dropdown -->
+                    <li class="nav-item dropdown d-none d-lg-block">
                         <a class="nav-link dropdown-toggle text-white hover-primary" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>{{ user.get_full_name|default:user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-dark">
                             <li><a class="dropdown-item text-white" href="{% url 'store:profile' %}">
                                 <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'store:order_list' %}">
+                                <i class="fas fa-shopping-bag me-2"></i>My Orders
                             </a></li>
                             {% if user.is_staff %}
                             <li><a class="dropdown-item text-white" href="{% url 'admin:index' %}" target="_blank">
@@ -75,6 +90,35 @@
                                 <i class="fas fa-sign-out-alt me-2"></i>Logout
                             </a></li>
                         </ul>
+                    </li>
+                    
+                    <!-- Mobile Accordion Menu -->
+                    <li class="nav-item d-lg-none">
+                        <div class="mobile-user-menu">
+                            <button class="btn btn-link nav-link text-white hover-primary w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#mobileUserMenu" aria-expanded="false">
+                                <i class="fas fa-user me-1"></i>{{ user.get_full_name|default:user.username }}
+                                <i class="fas fa-chevron-down ms-1"></i>
+                            </button>
+                            <div class="collapse" id="mobileUserMenu">
+                                <div class="mobile-menu-items bg-dark border border-secondary rounded mt-2 p-2">
+                                    <a class="dropdown-item text-white py-2" href="{% url 'store:profile' %}">
+                                        <i class="fas fa-user me-2"></i>Profile
+                                    </a>
+                                    <a class="dropdown-item text-white py-2" href="{% url 'store:order_list' %}">
+                                        <i class="fas fa-shopping-bag me-2"></i>My Orders
+                                    </a>
+                                    {% if user.is_staff %}
+                                    <a class="dropdown-item text-white py-2" href="{% url 'admin:index' %}" target="_blank">
+                                        <i class="fas fa-cog me-2"></i>Admin Panel
+                                    </a>
+                                    {% endif %}
+                                    <hr class="dropdown-divider border-secondary my-2">
+                                    <a class="dropdown-item text-white py-2" href="{% url 'store:logout' %}">
+                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </li>
                     {% else %}
                     <li class="nav-item">
@@ -215,20 +259,20 @@
             <div class="row">
                 <div class="col-md-6">
                     <h5 class="fw-bold"><i class="fas fa-mobile-alt me-2 text-primary"></i>iPhone Store</h5>
-                    <p class="text-muted">Your trusted source for all iPhone models from iPhone 6 to iPhone 17.</p>
+                    <p class="text-dark">Your trusted source for all iPhone models from iPhone 6 to iPhone 17.</p>
                 </div>
                 <div class="col-md-6">
                     <h5 class="fw-bold">Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{% url 'store:home' %}" class="text-muted text-decoration-none hover-primary">Home</a></li>
-                        <li class="mb-2"><a href="{% url 'store:product_list' %}" class="text-muted text-decoration-none hover-primary">All iPhones</a></li>
-                        <li class="mb-2"><a href="{% url 'store:cart' %}" class="text-muted text-decoration-none hover-primary">Shopping Cart</a></li>
+                        <li class="mb-2"><a href="{% url 'store:home' %}" class="text-dark text-decoration-none hover-primary">Home</a></li>
+                        <li class="mb-2"><a href="{% url 'store:product_list' %}" class="text-dark text-decoration-none hover-primary">All iPhones</a></li>
+                        <li class="mb-2"><a href="{% url 'store:cart' %}" class="text-dark text-decoration-none hover-primary">Shopping Cart</a></li>
                     </ul>
                 </div>
             </div>
             <hr class="border-secondary">
             <div class="text-center">
-                <p class="text-muted mb-0">&copy; 2024 iPhone Store. All rights reserved.</p>
+                <p class="text-dark mb-0">&copy; 2024 iPhone Store. All rights reserved.</p>
             </div>
         </div>
     </footer>
