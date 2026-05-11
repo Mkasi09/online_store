@@ -172,30 +172,7 @@
                     </div>
                 </div>
 
-                <!-- Add to Cart Form -->
-                {% if product.stock_quantity > 0 %}
-                <form action="{% url 'store:add_to_cart' product.pk %}" method="post" class="mb-4">
-                    {% csrf_token %}
-                    <div class="row align-items-center">
-                        <div class="col-5">
-                            <label for="quantity" class="form-label">Quantity:</label>
-                            <input type="number" name="quantity" id="quantity" class="form-control" value="1" min="1" max="{{ product.stock_quantity }}">
-                        </div>
-                        <div class="col-7">
-                            <label class="form-label d-block">&nbsp;</label>
-                            <button type="submit" class="btn btn-primary btn-lg w-100">
-                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
-                            </button>
-                        </div>
-                    </div>
-                </form>
-                {% else %}
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    This product is currently out of stock.
-                </div>
-                {% endif %}
-
+                
                 <!-- Product Description -->
                 {% if product.iphone_model.description %}
                 <div class="card bg-white text-dark border">
@@ -256,6 +233,33 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Floating Add to Cart Bar -->
+{% if product.stock_quantity > 0 %}
+<div class="floating-cart-bar" id="floatingCartBar">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-6 col-md-8">
+                <div class="product-info">
+                    <h6 class="mb-1">{{ product.iphone_model.name }}</h6>
+                    <small class="text-muted">{{ product.color.name }} • {{ product.storage }}</small>
+                    <div class="price mt-1">R{{ product.price }}</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <form action="{% url 'store:add_to_cart' product.pk %}" method="post" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <input type="number" name="quantity" class="form-control quantity-input" value="1" min="1" max="{{ product.stock_quantity }}">
+                    <button type="submit" class="btn btn-primary add-to-cart-btn">
+                        <i class="fas fa-cart-plus"></i>
+                        <span class="btn-text">Add</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <style>
 .product-card {
@@ -324,20 +328,234 @@
         flex: 0 0 auto;
         width: 50% !important;
     }
+    
+    /* Ensure proper text visibility on mobile */
+    .container > .row:first-child > div:last-child h1,
+    .container > .row:first-child > div:last-child h2,
+    .container > .row:first-child > div:last-child h3,
+    .container > .row:first-child > div:last-child h4,
+    .container > .row:first-child > div:last-child h5,
+    .container > .row:first-child > div:last-child h6 {
+        color: #212529 !important;
+    }
+    
+    .container > .row:first-child > div:last-child .badge {
+        background-color: #007bff !important;
+        color: #ffffff !important;
+    }
+    
+    .container > .row:first-child > div:last-child .card {
+        background-color: #ffffff !important;
+        color: #212529 !important;
+        border: 1px solid #dee2e6 !important;
+    }
+    
+    .container > .row:first-child > div:last-child .card-header {
+        background-color: #007bff !important;
+        color: #ffffff !important;
+    }
+    
+    .container > .row:first-child > div:last-child .btn-primary {
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+        color: #ffffff !important;
+    }
+    
+    .container > .row:first-child > div:last-child .btn-outline-primary {
+        background-color: #ffffff !important;
+        border-color: #007bff !important;
+        color: #007bff !important;
+    }
+    
+    .container > .row:first-child > div:last-child .form-control {
+        background-color: #ffffff !important;
+        border: 1px solid #ced4da !important;
+        color: #212529 !important;
+    }
+    
+    .container > .row:first-child > div:last-child .text-primary {
+        color: #007bff !important;
+    }
+    
+    .container > .row:first-child > div:last-child .text-muted {
+        color: #6c757d !important;
+    }
+    
+    /* Ensure related products heading is visible on mobile */
+    .mt-5 h3 {
+        color: #212529 !important;
+        font-weight: bold !important;
+    }
+}
+
+/* Floating Cart Bar Styles */
+.floating-cart-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 12px 0;
+    z-index: 1000;
+    box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.floating-cart-bar .product-info h6 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+.floating-cart-bar .product-info small {
+    font-size: 12px;
+    color: #86868b;
+}
+
+.floating-cart-bar .price {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+.floating-cart-bar .quantity-input {
+    width: 60px;
+    height: 36px;
+    border: 1px solid #d2d2d7;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.floating-cart-bar .add-to-cart-btn {
+    height: 36px;
+    background: #000000;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.floating-cart-bar .add-to-cart-btn:hover {
+    background: #333333;
+    transform: translateY(-1px);
+}
+
+.floating-cart-bar .add-to-cart-btn:active {
+    transform: translateY(0);
+}
+
+.floating-cart-bar .btn-text {
+    display: inline;
+}
+
+/* Mobile adjustments for floating cart */
+@media (max-width: 576px) {
+    .floating-cart-bar {
+        padding: 10px 0;
+    }
+    
+    .floating-cart-bar .product-info h6 {
+        font-size: 12px;
+    }
+    
+    .floating-cart-bar .product-info small {
+        font-size: 11px;
+    }
+    
+    .floating-cart-bar .price {
+        font-size: 14px;
+    }
+    
+    .floating-cart-bar .quantity-input {
+        width: 50px;
+        height: 32px;
+        font-size: 12px;
+    }
+    
+    .floating-cart-bar .add-to-cart-btn {
+        height: 32px;
+        font-size: 12px;
+        padding: 0 12px;
+    }
+    
+    .floating-cart-bar .btn-text {
+        display: none;
+    }
+    
+    /* Apply proper styling to floating cart on mobile */
+    .floating-cart-bar {
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-top: 1px solid #dee2e6 !important;
+    }
+    
+    .floating-cart-bar .product-info h6 {
+        color: #212529 !important;
+    }
+    
+    .floating-cart-bar .product-info small {
+        color: #6c757d !important;
+    }
+    
+    .floating-cart-bar .price {
+        color: #212529 !important;
+    }
+    
+    .floating-cart-bar .quantity-input {
+        background: #ffffff !important;
+        border: 1px solid #ced4da !important;
+        color: #212529 !important;
+    }
+    
+    .floating-cart-bar .add-to-cart-btn {
+        background: #007bff !important;
+        color: #ffffff !important;
+    }
+}
+
+/* Add padding to bottom of body to avoid content overlap */
+body {
+    padding-bottom: 80px;
+}
+
+@media (max-width: 576px) {
+    body {
+        padding-bottom: 70px;
+    }
 }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const quantityInput = document.getElementById('quantity');
+    const quantityInputs = document.querySelectorAll('.quantity-input');
     const maxQuantity = parseInt('{{ product.stock_quantity }}');
     
-    quantityInput.addEventListener('change', function() {
-        if (this.value > maxQuantity) {
-            this.value = maxQuantity;
-        }
-        if (this.value < 1) {
-            this.value = 1;
+    quantityInputs.forEach(function(input) {
+        input.addEventListener('change', function() {
+            if (this.value > maxQuantity) {
+                this.value = maxQuantity;
+            }
+            if (this.value < 1) {
+                this.value = 1;
+            }
+        });
+    });
+    
+    // Set color dot backgrounds
+    const colorDots = document.querySelectorAll('.color-dot');
+    colorDots.forEach(function(dot) {
+        const color = dot.getAttribute('data-color');
+        if (color) {
+            dot.style.backgroundColor = color;
         }
     });
 });

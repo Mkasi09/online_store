@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-^y^zrsl4y!vkb8%5$lonqh%ots2*wrqt#t-6w@o^pm88=mt#7^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.10.21.240', '127.0.0.1','10.10.19.163', 'localhost', '*', 'beb5-102-132-150-131.ngrok-free.app', 'd217-102-132-150-131.ngrok-free.app']
+ALLOWED_HOSTS = ['10.10.21.240', '127.0.0.1','10.10.19.163','10.10.23.58', 'localhost', '*', 'beb5-102-132-150-131.ngrok-free.app', 'd217-102-132-150-131.ngrok-free.app']
 
 # CSRF Trusted Origins for ngrok
 CSRF_TRUSTED_ORIGINS = ['https://d217-102-132-150-131.ngrok-free.app', 'https://beb5-102-132-150-131.ngrok-free.app']
@@ -149,3 +149,16 @@ PAYFAST_MERCHANT_KEY = 'wfr3ovxbihvsv'  # Live merchant key
 
 # Optional: Passphrase for additional security (set in PayFast account settings)
 PAYFAST_PASSPHRASE = ''  # Leave empty if not configured
+
+
+# Paystack Payment Gateway Configuration
+# =====================================
+# Mode: 'test' for testing, 'live' for production
+PAYSTACK_MODE = 'test'
+
+# Paystack API Keys
+PAYSTACK_SECRET_KEY = 'sk_test_2a052e3d0b7334fd4a73d1f1e3d791caa88e1423'
+PAYSTACK_PUBLIC_KEY = 'pk_test_c910d03f5c456fc362374fc5f45408a544e74731'
+
+# Paystack URLs
+PAYSTACK_PAYMENT_URL = 'https://api.paystack.co/transaction/initialize'

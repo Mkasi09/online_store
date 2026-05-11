@@ -119,6 +119,7 @@ from .forms import CustomUserCreationForm
 
 
 from .payfast import PayFastPayment, verify_payfast_signature
+from .paystack import PaystackPayment, process_paystack_callback
 
 
 
@@ -2673,39 +2674,42 @@ def checkout(request):
 
             temp_order = TempOrder(temp_order_data)
 
-            payfast_payment = PayFastPayment(temp_order, request)
-
-            payment_form = payfast_payment.get_payment_form()
-
+            # Get payment method from form
+            payment_method = request.POST.get('payment_method', 'payfast')
             
+            # Store payment method in session for later use
+            request.session['payment_method'] = payment_method
 
-            # Return payment form data for AJAX requests
+            if payment_method == 'paystack':
+                # Redirect to Paystack payment page
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'order_number': 'PENDING',
+                        'payment_required': True,
+                        'redirect_url': '/payment/paystack/'
+                    })
+                else:
+                    return redirect('store:paystack_payment')
+            else:
+                # Default to PayFast
+                payfast_payment = PayFastPayment(temp_order, request)
+                payment_form = payfast_payment.get_payment_form()
 
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                # Return payment form data for AJAX requests
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return JsonResponse({
+                        'success': True,
+                        'order_number': 'PENDING',
+                        'payment_required': True,
+                        'payment_form': payment_form
+                    })
 
-                return JsonResponse({
-
-                    'success': True,
-
-                    'order_number': 'PENDING',
-
-                    'payment_required': True,
-
+                # For regular form submission, render payment redirect page
+                return render(request, 'store/payment_redirect.html', {
+                    'order': temp_order,
                     'payment_form': payment_form
-
                 })
-
-            
-
-            # For regular form submission, render payment redirect page
-
-            return render(request, 'store/payment_redirect.html', {
-
-                'order': temp_order,
-
-                'payment_form': payment_form
-
-            })
 
 
 
@@ -2775,10 +2779,159 @@ def checkout(request):
 
 
 
+@login_required
+def paystack_payment_redirect(request):
+    """Display Paystack payment page"""
+    order_id = request.session.get('pending_order_id')
+    
+    if not order_id:
+        messages.error(request, 'No pending order found.')
+        return redirect('store:cart')
+    
+    # Try to get PendingOrder first, then Order as fallback
+    from .models import PendingOrder
+    try:
+        pending_order = PendingOrder.objects.get(id=order_id, user=request.user)
+        
+        # Create a temporary order-like object for PaystackPayment
+        class TempOrder:
+            def __init__(self, pending_order):
+                self.id = str(pending_order.id)
+                self.order_number = f'PENDING-{str(pending_order.id)[:8]}'
+                self.total_amount = pending_order.total_amount
+                self.email = pending_order.email
+        
+        temp_order = TempOrder(pending_order)
+        paystack_payment = PaystackPayment(temp_order, request)
+        payment_form = paystack_payment.get_payment_form()
+        
+        return render(request, 'store/paystack_payment.html', {
+            'order': temp_order,
+            'payment_form': payment_form,
+            'paystack_public_key': paystack_payment.config.get_public_key()
+        })
+        
+    except PendingOrder.DoesNotExist:
+        # Try to get regular Order as fallback
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+        paystack_payment = PaystackPayment(order, request)
+        payment_form = paystack_payment.get_payment_form()
+        
+        return render(request, 'store/paystack_payment.html', {
+            'order': order,
+            'payment_form': payment_form,
+            'paystack_public_key': paystack_payment.config.get_public_key()
+        })
 
 
-
-
+@login_required
+def paystack_callback(request):
+    """Handle Paystack payment callback"""
+    reference = request.GET.get('reference')
+    order_id = request.session.get('pending_order_id')
+    
+    if not reference or not order_id:
+        messages.error(request, 'Invalid payment callback.')
+        return redirect('store:cart')
+    
+    # Try to get PendingOrder first, then Order as fallback
+    from .models import PendingOrder
+    try:
+        pending_order = PendingOrder.objects.get(id=order_id, user=request.user)
+        
+        # Create a temporary order-like object for PaystackPayment
+        class TempOrder:
+            def __init__(self, pending_order):
+                self.id = str(pending_order.id)
+                self.order_number = f'PENDING-{str(pending_order.id)[:8]}'
+                self.total_amount = pending_order.total_amount
+                self.email = pending_order.email
+                self.payment_status = 'pending'
+                self.status = 'pending_payment'
+                
+            def save(self):
+                # Convert PendingOrder to actual Order on successful payment
+                from .models import Order, OrderItem
+                import uuid
+                
+                # Create actual Order from PendingOrder data
+                actual_order = Order.objects.create(
+                    id=uuid.uuid4(),
+                    user=pending_order.user,
+                    email=pending_order.email,
+                    total_amount=pending_order.total_amount,
+                    payment_status='completed',
+                    status='paid',
+                    shipping_street=pending_order.order_data.get('shipping_street', ''),
+                    shipping_town=pending_order.order_data.get('shipping_town', ''),
+                    shipping_city=pending_order.order_data.get('shipping_city', ''),
+                    shipping_province=pending_order.order_data.get('shipping_province', ''),
+                    shipping_postal=pending_order.order_data.get('shipping_postal', ''),
+                    billing_street=pending_order.order_data.get('billing_street', ''),
+                    billing_town=pending_order.order_data.get('billing_town', ''),
+                    billing_city=pending_order.order_data.get('billing_city', ''),
+                    billing_province=pending_order.order_data.get('billing_province', ''),
+                    billing_postal=pending_order.order_data.get('billing_postal', ''),
+                    phone=pending_order.order_data.get('phone', ''),
+                    notes=pending_order.order_data.get('notes', '')
+                )
+                
+                # Add order items
+                for item_data in pending_order.order_data.get('cart_items', []):
+                    from .models import iPhoneProduct
+                    product = iPhoneProduct.objects.get(id=item_data['product_id'])
+                    OrderItem.objects.create(
+                        order=actual_order,
+                        product=product,
+                        quantity=item_data['quantity'],
+                        price=item_data['price']
+                    )
+                
+                # Delete the pending order
+                pending_order.delete()
+                
+                # Store the actual order ID for redirect
+                self.actual_order_id = actual_order.id
+        
+        temp_order = TempOrder(pending_order)
+        result = process_paystack_callback(reference, temp_order)
+        
+        if result['success']:
+            # Update order status and convert to actual order
+            temp_order.payment_status = 'completed'
+            temp_order.status = 'paid'
+            temp_order.save()
+            
+            # Clear session
+            if 'pending_order_id' in request.session:
+                del request.session['pending_order_id']
+            
+            messages.success(request, 'Payment successful! Your order has been confirmed.')
+            return redirect('store:order_detail', order_id=temp_order.actual_order_id)
+        else:
+            messages.error(request, f"Payment failed: {result['message']}")
+            return redirect('store:payment_cancel')
+            
+    except PendingOrder.DoesNotExist:
+        # Try to get regular Order as fallback
+        order = get_object_or_404(Order, id=order_id, user=request.user)
+        result = process_paystack_callback(reference, order)
+        
+        if result['success']:
+            # Update order status
+            order.payment_status = 'completed'
+            order.status = 'paid'
+            order.save()
+            
+            # Clear session
+            if 'pending_order_id' in request.session:
+                del request.session['pending_order_id']
+            
+            messages.success(request, 'Payment successful! Your order has been confirmed.')
+            return redirect('store:order_detail', order_id=order.id)
+        else:
+            messages.error(request, f"Payment failed: {result['message']}")
+            return redirect('store:payment_cancel')
 
 
 @login_required

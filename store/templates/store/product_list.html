@@ -8,7 +8,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h1 class="display-5 fw-bold">All iPhones</h1>
-            <p class="lead text-dark">Browse our complete collection of iPhones from iPhone 6 to iPhone 17</p>
+            <p class="lead text-secondary">Browse our complete collection of iPhones from iPhone 6 to iPhone 17</p>
         </div>
     </div>
 
@@ -104,7 +104,7 @@
                             <div class="card-body d-flex flex-column">
                                 <h5 class="card-title">{{ product.iphone_model.name }}</h5>
                                 <p class="card-text">
-                                    <small class="text-dark">
+                                    <small class="text-muted">
                                         {{ product.color.name }} • {{ product.storage }}
                                     </small>
                                 </p>
@@ -134,9 +134,9 @@
                 {% empty %}
                 <div class="col-12">
                     <div class="text-center py-5">
-                        <i class="fas fa-search fa-3x text-dark mb-3"></i>
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
                         <h4>No products found</h4>
-                        <p class="text-dark">Try adjusting your filters or search terms</p>
+                        <p class="text-muted">Try adjusting your filters or search terms</p>
                         <a href="{% url 'store:product_list' %}" class="btn btn-primary">Clear Filters</a>
                     </div>
                 </div>
@@ -302,7 +302,7 @@
 }
 
 .clickable-card .card-text small {
-    color: #000000 !important;
+    color: #adb5bd !important;
 }
 
 .clickable-card .h5 {
@@ -336,7 +336,7 @@
 }
 
 .search-container .form-control::placeholder {
-    color: #000000 !important;
+    color: #adb5bd !important;
 }
 
 .search-container .btn-primary {

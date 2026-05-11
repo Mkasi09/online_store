@@ -22,45 +22,27 @@
             <a class="navbar-brand fw-bold text-white" href="{% url 'store:home' %}">
                 <i> <img src="{% static 'store/img/iphonestore1.png' %}" alt="iPhone Logo" height="80"></i>iPhone Store
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <!-- Mobile Cart Icon - Always Visible -->
+            <a class="nav-link position-relative text-white hover-primary d-lg-none me-3 mobile-cart-icon" href="{% url 'store:cart' %}">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count">0</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="modal" data-bs-target="#mobileNavModal">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
+            <!-- Desktop Navigation -->
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link text-white hover-primary" href="{% url 'store:home' %}">Home</a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle text-white hover-primary" href="#" role="button" data-bs-toggle="dropdown">
-                            iPhones
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-dark">
-                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}">
-                                <i class="fas fa-mobile-alt me-2"></i>All iPhones
-                            </a></li>
-                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=new">
-                                <i class="fas fa-star me-2"></i>Brand New
-                            </a></li>
-                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=refurbished">
-                                <i class="fas fa-recycle me-2"></i>Refurbished
-                            </a></li>
-                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=used">
-                                <i class="fas fa-handshake me-2"></i>Used
-                            </a></li>
-                        </ul>
-                    </li>
-                    {% if user.is_authenticated and user.is_staff %}
-                    <li class="nav-item d-lg-none">
-                        <a class="nav-link text-white hover-primary" href="{% url 'admin:index' %}" target="_blank">
-                            <i class="fas fa-cog me-1"></i>Admin
-                        </a>
-                    </li>
-                    {% endif %}
                 </ul>
                 
                 <ul class="navbar-nav">
-                    <li class="nav-item">
+                    <!-- Desktop Cart Icon -->
+                    <li class="nav-item d-none d-lg-block">
                         <a class="nav-link position-relative text-white hover-primary" href="{% url 'store:cart' %}">
                             <i class="fas fa-shopping-cart"></i>
                             <span class="cart-count">0</span>
@@ -68,7 +50,7 @@
                     </li>
                     
                     {% if user.is_authenticated %}
-                    <!-- Desktop Dropdown -->
+                    <!-- Desktop User Dropdown -->
                     <li class="nav-item dropdown d-none d-lg-block">
                         <a class="nav-link dropdown-toggle text-white hover-primary" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user me-1"></i>{{ user.get_full_name|default:user.username }}
@@ -91,49 +73,135 @@
                             </a></li>
                         </ul>
                     </li>
-                    
-                    <!-- Mobile Accordion Menu -->
-                    <li class="nav-item d-lg-none">
-                        <div class="mobile-user-menu">
-                            <button class="btn btn-link nav-link text-white hover-primary w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#mobileUserMenu" aria-expanded="false">
-                                <i class="fas fa-user me-1"></i>{{ user.get_full_name|default:user.username }}
-                                <i class="fas fa-chevron-down ms-1"></i>
-                            </button>
-                            <div class="collapse" id="mobileUserMenu">
-                                <div class="mobile-menu-items bg-dark border border-secondary rounded mt-2 p-2">
-                                    <a class="dropdown-item text-white py-2" href="{% url 'store:profile' %}">
-                                        <i class="fas fa-user me-2"></i>Profile
-                                    </a>
-                                    <a class="dropdown-item text-white py-2" href="{% url 'store:order_list' %}">
-                                        <i class="fas fa-shopping-bag me-2"></i>My Orders
-                                    </a>
-                                    {% if user.is_staff %}
-                                    <a class="dropdown-item text-white py-2" href="{% url 'admin:index' %}" target="_blank">
-                                        <i class="fas fa-cog me-2"></i>Admin Panel
-                                    </a>
-                                    {% endif %}
-                                    <hr class="dropdown-divider border-secondary my-2">
-                                    <a class="dropdown-item text-white py-2" href="{% url 'store:logout' %}">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
                     {% else %}
-                    <li class="nav-item">
+                    <!-- Desktop Auth Links -->
+                    <li class="nav-item d-none d-lg-block">
                         <a class="nav-link text-white hover-primary" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
                             <i class="fas fa-sign-in-alt me-1"></i>Login
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item d-none d-lg-block">
                         <a class="nav-link text-white hover-primary" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">
                             <i class="fas fa-user-plus me-1"></i>Sign Up
                         </a>
                     </li>
+                    <li class="nav-item dropdown d-none d-lg-block">
+                        <a class="nav-link dropdown-toggle text-white hover-primary" href="#" role="button" data-bs-toggle="dropdown">
+                            iPhones
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}">
+                                <i class="fas fa-mobile-alt me-2"></i>All iPhones
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=new">
+                                <i class="fas fa-star me-2"></i>Brand New
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=refurbished">
+                                <i class="fas fa-recycle me-2"></i>Refurbished
+                            </a></li>
+                            <li><a class="dropdown-item text-white" href="{% url 'store:product_list' %}?condition=used">
+                                <i class="fas fa-handshake me-2"></i>Used
+                            </a></li>
+                        </ul>
+                    </li>
                     {% endif %}
                 </ul>
             </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Navigation Modal -->
+    <div class="modal fade" id="mobileNavModal" tabindex="-1" aria-labelledby="mobileNavModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-right">
+            <div class="modal-content bg-dark text-white border-0">
+                <div class="modal-header border-0 p-3">
+                    <h5 class="modal-title" id="mobileNavModalLabel">
+                        <i class="fas fa-bars me-2 text-primary"></i>Menu
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <nav class="mobile-nav">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:home' %}">
+                                    <span><i class="fas fa-home me-3"></i>Home</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:product_list' %}">
+                                    <span><i class="fas fa-mobile-alt me-3"></i>All iPhones</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:product_list' %}?condition=new">
+                                    <span><i class="fas fa-star me-3"></i>Brand New</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:product_list' %}?condition=refurbished">
+                                    <span><i class="fas fa-recycle me-3"></i>Refurbished</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:product_list' %}?condition=used">
+                                    <span><i class="fas fa-handshake me-3"></i>Used</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            
+                            {% if user.is_authenticated and user.is_staff %}
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'admin:index' %}" target="_blank">
+                                    <span><i class="fas fa-cog me-3"></i>Admin</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% if user.is_authenticated %}
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:profile' %}">
+                                    <span><i class="fas fa-user me-3"></i>Profile</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:order_list' %}">
+                                    <span><i class="fas fa-shopping-bag me-3"></i>My Orders</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="{% url 'store:logout' %}">
+                                    <span><i class="fas fa-sign-out-alt me-3"></i>Logout</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target="#loginModal" data-bs-dismiss="modal">
+                                    <span><i class="fas fa-sign-in-alt me-3"></i>Login</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            <li class="mobile-nav-item">
+                                <a class="mobile-nav-link text-white d-flex align-items-center justify-content-between" href="#" data-bs-toggle="modal" data-bs-target="#signupModal" data-bs-dismiss="modal">
+                                    <span><i class="fas fa-user-plus me-3"></i>Sign Up</span>
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
         </div>
     </nav>
 
@@ -259,20 +327,20 @@
             <div class="row">
                 <div class="col-md-6">
                     <h5 class="fw-bold"><i class="fas fa-mobile-alt me-2 text-primary"></i>iPhone Store</h5>
-                    <p class="text-dark">Your trusted source for all iPhone models from iPhone 6 to iPhone 17.</p>
+                    <p class="text-white">Your trusted source for all iPhone models from iPhone 6 to iPhone 17.</p>
                 </div>
                 <div class="col-md-6">
                     <h5 class="fw-bold">Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2"><a href="{% url 'store:home' %}" class="text-dark text-decoration-none hover-primary">Home</a></li>
-                        <li class="mb-2"><a href="{% url 'store:product_list' %}" class="text-dark text-decoration-none hover-primary">All iPhones</a></li>
-                        <li class="mb-2"><a href="{% url 'store:cart' %}" class="text-dark text-decoration-none hover-primary">Shopping Cart</a></li>
+                        <li class="mb-2"><a href="{% url 'store:home' %}" class="text-white text-decoration-none hover-primary">Home</a></li>
+                        <li class="mb-2"><a href="{% url 'store:product_list' %}" class="text-white text-decoration-none hover-primary">All iPhones</a></li>
+                        <li class="mb-2"><a href="{% url 'store:cart' %}" class="text-white text-decoration-none hover-primary">Shopping Cart</a></li>
                     </ul>
                 </div>
             </div>
             <hr class="border-secondary">
             <div class="text-center">
-                <p class="text-dark mb-0">&copy; 2024 iPhone Store. All rights reserved.</p>
+                <p class="text-white mb-0">&copy; 2024 iPhone Store. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -301,6 +369,183 @@
         /* Force white text for labels */
         .modal .form-label {
             color: white !important;
+        }
+        
+        /* Mobile Cart Icon Styling */
+        @media (max-width: 991.98px) {
+            /* Ensure mobile cart icon is properly sized and positioned */
+            .mobile-cart-icon {
+                font-size: 1.2rem;
+                padding: 0.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 44px;
+                min-height: 44px;
+                margin-right: 0.5rem !important;
+            }
+            
+            .mobile-cart-icon .cart-count {
+                top: -6px;
+                right: -6px;
+                font-size: 0.7rem;
+                width: 18px;
+                height: 18px;
+            }
+            
+            /* Prevent navbar layout shifts */
+            .navbar {
+                position: relative;
+            }
+            
+            /* Ensure stable positioning for mobile elements */
+            .navbar-brand,
+            .mobile-cart-icon,
+            .navbar-toggler {
+                position: relative;
+                flex-shrink: 0;
+            }
+        }
+        
+        /* Mobile Navigation Modal Styling */
+        .modal-dialog-right {
+            position: fixed;
+            top: 0;
+            right: 0;
+            margin: 0;
+            width: 320px;
+            height: 100vh;
+            max-height: 100vh;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .modal-dialog-right.show {
+            transform: translateX(0);
+        }
+        
+        #mobileNavModal .modal-content {
+            height: 100vh;
+            border-radius: 0;
+            border: none;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        #mobileNavModal .modal-header {
+            border-bottom: 1px solid #404040;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+        }
+        
+        #mobileNavModal .modal-body {
+            height: calc(100vh - 70px);
+            overflow-y: auto;
+        }
+        
+        .mobile-nav {
+            padding: 0;
+        }
+        
+        .mobile-nav-item {
+            border-bottom: 1px solid #333333;
+            transition: background-color 0.3s ease;
+        }
+        
+        .mobile-nav-item:hover {
+            background-color: #2a2a2a;
+        }
+        
+        .mobile-nav-item:last-child {
+            border-bottom: none;
+        }
+        
+        .mobile-nav-link {
+            padding: 1rem 1.25rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            color: #ffffff !important;
+        }
+        
+        .mobile-nav-link:hover {
+            background-color: #007bff;
+            color: #ffffff !important;
+            padding-left: 1.5rem;
+        }
+        
+        .mobile-nav-link span {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .mobile-nav-link i.fa-chevron-right {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        
+        .mobile-nav-link:hover i.fa-chevron-right {
+            opacity: 1;
+            transform: translateX(3px);
+        }
+        
+        /* Close button styling */
+        .btn-close-white {
+            filter: invert(1);
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+        }
+        
+        .btn-close-white:hover {
+            opacity: 1;
+        }
+        
+        /* Animation for modal slide-in */
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+        
+        @keyframes slideOutRight {
+            from {
+                transform: translateX(0);
+            }
+            to {
+                transform: translateX(100%);
+            }
+        }
+        
+        .modal.show #mobileNavModal .modal-dialog-right {
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 480px) {
+            .modal-dialog-right {
+                width: 280px;
+            }
+            
+            .mobile-nav-link {
+                padding: 0.875rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .mobile-nav-link span i {
+                margin-right: 0.75rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .modal-dialog-right {
+                width: 260px;
+            }
         }
     </style>
     

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Paystack Payment - iPhone Store</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .payment-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .order-summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .paystack-button {
+            background-color: #00C853 !important;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .paystack-button:hover {
+            background-color: #00A846 !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="payment-container">
+            <div class="text-center mb-4">
+                <h3>Complete Your Payment</h3>
+                <p class="text-muted">Secure payment powered by Paystack</p>
+            </div>
+
+            <div class="order-summary">
+                <h5>Order Summary</h5>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <strong>Order ID:</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        #{{ order.id }}
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>Total Amount:</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        <h5 class="text-success">R {{ order.total_amount }}</h5>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-6">
+                        <strong>Email:</strong>
+                    </div>
+                    <div class="col-6 text-end">
+                        {{ order.email }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paystack Payment Form -->
+            <div id="paystack-payment-container">
+                {{ payment_form|safe }}
+            </div>
+
+            <div class="text-center mt-4">
+                <small class="text-muted">
+                    <i class="fas fa-lock"></i> Your payment information is secure and encrypted
+                </small>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <h6><i class="fas fa-info-circle"></i> Payment Instructions</h6>
+                <ul class="mb-0">
+                    <li>Click "Pay with Paystack" to proceed to secure payment</li>
+                    <li>You will be redirected to Paystack's secure payment page</li>
+                    <li>Complete payment using your preferred method (Card, Bank Transfer, USSD, etc.)</li>
+                    <li>After successful payment, you will be redirected back to your order confirmation</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-fontawesome-key.js" crossorigin="anonymous"></script>
+</body>
+</html>
