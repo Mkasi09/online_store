@@ -88,6 +88,38 @@
 
 
 
+            {% if order.status == 'pending_payment' %}
+            <div class="card shadow mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-university me-2"></i>Payment Instructions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning border-warning">
+                        <strong>Use order reference #{{ order.order_number }}</strong> when making payment. Your order will be processed after proof of payment is received and confirmed.
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Banking Details</h6>
+                            <p class="mb-1"><strong>Bank:</strong> {{ manual_payment.bank_name }}</p>
+                            <p class="mb-1"><strong>Account Name:</strong> {{ manual_payment.account_name }}</p>
+                            <p class="mb-1"><strong>Account Number:</strong> {{ manual_payment.account_number }}</p>
+                            <p class="mb-1"><strong>Branch Code:</strong> {{ manual_payment.branch_code }}</p>
+                            <p class="mb-0"><strong>Account Type:</strong> {{ manual_payment.account_type }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary mb-3">Send Proof Of Payment</h6>
+                            <p class="mb-1"><strong>Email:</strong> {{ manual_payment.proof_email }}</p>
+                            <p class="mb-0"><strong>WhatsApp:</strong> {{ manual_payment.whatsapp }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+
+
             <!-- Order Status Progress -->
 
             <div class="card shadow mb-4">
@@ -164,9 +196,9 @@
 
                                 <div class="step-content">
 
-                                    <h6 class="mb-1">Pending Payment</h6>
+                                    <h6 class="mb-1">Awaiting Proof</h6>
 
-                                    <small class="text-muted">Order placed, awaiting payment</small>
+                                    <small class="text-muted">Bank details sent</small>
 
                                 </div>
 
@@ -192,7 +224,7 @@
 
                                 <div class="step-content">
 
-                                    <h6 class="mb-1">Paid</h6>
+                                    <h6 class="mb-1">Proof Confirmed</h6>
 
                                     <small class="text-muted">Payment confirmed</small>
 

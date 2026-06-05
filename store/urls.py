@@ -25,17 +25,6 @@ urlpatterns = [
     path('orders/', views.order_list, name='order_list'),
     path('order/<uuid:order_id>/', views.order_detail, name='order_detail'),
     
-    # PayFast Payment URLs
-    path('payment/redirect/', views.payment_redirect, name='payment_redirect'),
-    path('payment/success/', views.payment_success, name='payment_success'),
-    path('payment/cancel/', views.payment_cancel, name='payment_cancel'),
-    path('payment/notify/', views.payment_notify, name='payment_notify'),
-    
-    # Paystack Payment URLs
-    path('payment/paystack/', views.paystack_payment_redirect, name='paystack_payment'),
-    path('payment/paystack/callback/', views.paystack_callback, name='paystack_callback'),
-    
     # Debug URL
     path('checkout/debug/', views.checkout_debug, name='checkout_debug'),
-    path('payment/debug/', views.payment_debug, name='payment_debug'),
 ]

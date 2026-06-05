@@ -173,7 +173,7 @@ class OrderAdmin(admin.ModelAdmin):
         }
         
         progress_steps = [
-            ('pending_payment', 'Payment'),
+            ('pending_payment', 'Proof'),
             ('processing', 'Processing'),
             ('shipped', 'Shipped'),
             ('delivered', 'Delivered')
@@ -228,7 +228,10 @@ class OrderAdmin(admin.ModelAdmin):
 
     # Custom Actions
     def mark_as_processing(self, request, queryset):
-        updated = queryset.filter(status='pending_payment').update(status='processing')
+        updated = queryset.filter(status='pending_payment').update(
+            status='processing',
+            payment_status='completed',
+        )
         self.message_user(request, f'{updated} orders marked as processing.')
     mark_as_processing.short_description = 'Mark selected orders as Processing'
 

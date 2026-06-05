@@ -114,7 +114,7 @@
                         <div class="d-grid gap-2">
                             {% if user.is_authenticated %}
                             <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#checkoutModal">
-                                <i class="fas fa-credit-card me-2"></i>Proceed to Checkout
+                                <i class="fas fa-shopping-bag me-2"></i>Proceed to Checkout
                             </button>
                             {% else %}
                             <button class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#loginModal">
@@ -125,7 +125,7 @@
                             </small>
                             {% endif %}
                             <p class="text-center text-white small mt-2">
-                                <i class="fas fa-lock me-1"></i>Secure checkout
+                                <i class="fas fa-envelope me-1"></i>Banking details sent after order
                             </p>
                         </div>
                         
@@ -731,7 +731,7 @@
         <div class="modal-content bg-dark text-white border-secondary">
             <div class="modal-header border-secondary">
                 <h5 class="modal-title fw-bold" id="checkoutModalLabel">
-                    <i class="fas fa-credit-card me-2 text-primary"></i>Checkout
+                    <i class="fas fa-shopping-bag me-2 text-primary"></i>Checkout
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -846,43 +846,13 @@
                         {% endif %}
                     </div>
                     
-                    <!-- Payment Method Selection -->
-                    <div class="mb-4">
-                        <h6 class="text-primary mb-3">
-                            <i class="fas fa-credit-card me-2"></i>Select Payment Method
-                        </h6>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card bg-dark border-secondary">
-                                    <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="payment_method" id="payfast" value="payfast" checked>
-                                            <label class="form-check-label text-white" for="payfast">
-                                                <strong>PayFast</strong>
-                                                <br><small class="text-muted">Secure payment via PayFast (South Africa)</small>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="card bg-dark border-secondary">
-                                    <div class="card-body">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="payment_method" id="paystack" value="paystack">
-                                            <label class="form-check-label text-white" for="paystack">
-                                                <strong>Paystack</strong>
-                                                <br><small class="text-muted">Secure payment via Paystack (South Africa & Africa)</small>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="alert alert-info border-info text-white">
+                        <i class="fas fa-university me-2"></i>
+                        Place your order now. Banking details will be emailed to you, and your order will move to Processing after proof of payment is received by email or WhatsApp.
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary btn-lg" id="placeOrderBtn">
-                            <i class="fas fa-lock me-2"></i>Place Order - R{{ cart.get_total_price }}
+                            <i class="fas fa-shopping-bag me-2"></i>Place Order - R{{ cart.get_total_price }}
                         </button>
                     </div>
                     <noscript>
@@ -980,28 +950,18 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            if (data.redirect_url) {
-                // Redirect to Paystack payment page
-                window.location.href = data.redirect_url;
-            } else if (data.payment_form) {
-                // Display PayFast payment form
-                document.body.innerHTML = data.payment_form + document.body.innerHTML;
-                document.forms[0].submit();
-            } else {
-                // Default redirect
-                window.location.href = '/payment/redirect/';
-            }
+            window.location.href = data.redirect_url;
         } else {
             // Show error
             alert('Error: ' + (data.error || 'Unknown error occurred'));
-            submitBtn.innerHTML = '<i class="fas fa-lock me-2"></i>Place Order - R{{ cart.get_total_price }}';
+            submitBtn.innerHTML = '<i class="fas fa-shopping-bag me-2"></i>Place Order - R{{ cart.get_total_price }}';
             submitBtn.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
         alert('An error occurred. Please try again.');
-        submitBtn.innerHTML = '<i class="fas fa-lock me-2"></i>Place Order - R{{ cart.get_total_price }}';
+        submitBtn.innerHTML = '<i class="fas fa-shopping-bag me-2"></i>Place Order - R{{ cart.get_total_price }}';
         submitBtn.disabled = false;
     });
 });

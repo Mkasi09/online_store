@@ -119,7 +119,6 @@ from .forms import CustomUserCreationForm
 
 
 from .payfast import PayFastPayment, verify_payfast_signature
-from .paystack import PaystackPayment, process_paystack_callback
 
 
 
@@ -144,6 +143,9 @@ import uuid
 
 
 from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.core.mail import send_mail
 
 
 
@@ -2324,6 +2326,44 @@ def update_profile(request):
 
 
 
+def send_manual_payment_email(order, request):
+    """Send bank details and proof-of-payment instructions for a new order."""
+    bank_details = [
+        f"Bank: {settings.ORDER_PAYMENT_BANK_NAME}",
+        f"Account name: {settings.ORDER_PAYMENT_ACCOUNT_NAME}",
+        f"Account number: {settings.ORDER_PAYMENT_ACCOUNT_NUMBER}",
+        f"Branch code: {settings.ORDER_PAYMENT_BRANCH_CODE}",
+        f"Account type: {settings.ORDER_PAYMENT_ACCOUNT_TYPE}",
+        f"Reference: {order.order_number}",
+    ]
+    proof_email = settings.ORDER_PAYMENT_PROOF_EMAIL
+    whatsapp = settings.ORDER_PAYMENT_WHATSAPP
+    order_url = request.build_absolute_uri(order.get_absolute_url())
+
+    message = (
+        f"Hi {order.user.get_full_name() or order.user.username},\n\n"
+        f"Thank you for your order #{order.order_number}.\n\n"
+        f"Amount due: R{order.total_amount}\n\n"
+        "Please pay using the banking details below:\n"
+        f"{chr(10).join(bank_details)}\n\n"
+        "After making payment, please send proof of payment by email or WhatsApp:\n"
+        f"Email: {proof_email}\n"
+        f"WhatsApp: {whatsapp}\n\n"
+        "Your order status will be updated to Processing once proof of payment has been received and confirmed.\n\n"
+        f"View your order: {order_url}\n\n"
+        "Thank you,\n"
+        "iPhone Store"
+    )
+
+    send_mail(
+        subject=f"Order #{order.order_number} payment instructions",
+        message=message,
+        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+        recipient_list=[order.email],
+        fail_silently=True,
+    )
+
+
 @login_required
 
 
@@ -2550,166 +2590,71 @@ def checkout(request):
 
             
 
+            for cart_item in cart_items:
+                if cart_item.quantity > cart_item.product.stock_quantity:
+                    error = f'Sorry, only {cart_item.product.stock_quantity} {cart_item.product.iphone_model.name} available.'
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'error': error})
+                    messages.error(request, error)
+                    return redirect('store:cart')
 
 
-            # Store order data in session for later creation after payment
 
             total_amount = cart.get_total_price()
+            phone = request.POST.get('phone', '').strip()
+            notes = request.POST.get('notes', '').strip()
 
-            order_data = {
-
-                'user_id': request.user.id,
-
-                'total_amount': str(total_amount),
-
-                'shipping_street': shipping_street,
-
-                'shipping_town': shipping_town,
-
-                'shipping_city': shipping_city,
-
-                'shipping_province': shipping_province,
-
-                'shipping_postal': shipping_postal,
-
-                'billing_street': billing_street,
-
-                'billing_town': billing_town,
-
-                'billing_city': billing_city,
-
-                'billing_province': billing_province,
-
-                'billing_postal': billing_postal,
-
-                'shipping_address': shipping_address,
-
-                'billing_address': billing_address,
-
-                'email': email,
-
-                'phone': request.POST.get('phone', ''),
-
-                'notes': request.POST.get('notes', ''),
-
-                'cart_items': []
-
-            }
-
-            
-
-            # Store cart items data
-
-            for cart_item in cart_items:
-
-                order_data['cart_items'].append({
-
-                    'product_id': cart_item.product.id,
-
-                    'quantity': cart_item.quantity,
-
-                    'price': str(cart_item.product.price)
-
-                })
-
-            
-
-            # Create pending order record
-
-            from .models import PendingOrder
-
-            pending_order = PendingOrder.objects.create(
-
+            order = Order.objects.create(
                 user=request.user,
-
-                order_data=order_data,
-
+                session_key=request.session.session_key,
+                status='pending_payment',
+                payment_status='pending',
                 total_amount=total_amount,
-
-                email=email
-
+                shipping_street=shipping_street,
+                shipping_town=shipping_town,
+                shipping_city=shipping_city,
+                shipping_province=shipping_province,
+                shipping_postal=shipping_postal,
+                billing_street=billing_street,
+                billing_town=billing_town,
+                billing_city=billing_city,
+                billing_province=billing_province,
+                billing_postal=billing_postal,
+                shipping_address=shipping_address,
+                billing_address=billing_address,
+                email=email,
+                phone=phone,
+                notes=notes,
             )
 
-            
+            for cart_item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.product,
+                    quantity=cart_item.quantity,
+                    price=cart_item.product.price,
+                )
+                cart_item.product.stock_quantity -= cart_item.quantity
+                cart_item.product.save()
 
-            # Store pending order ID in session
+            cart.cartitem_set.all().delete()
+            send_manual_payment_email(order, request)
 
-            request.session['pending_order_id'] = str(pending_order.id)
+            messages.success(
+                request,
+                'Order placed. Banking details have been emailed to you. '
+                'Send proof of payment by email or WhatsApp so your order can be processed.'
+            )
 
-
-
-            
-
-
-
-            # Generate PayFast payment form with temporary order data
-
-            temp_order_data = {
-
-                'id': str(pending_order.id),
-
-                'order_number': f'PENDING-{str(pending_order.id)[:8]}',
-
-                'total_amount': total_amount,
-
-                'email': email
-
-            }
-
-            # Create a simple object for PayFastPayment
-
-            class TempOrder:
-
-                def __init__(self, data):
-
-                    self.id = data['id']
-
-                    self.order_number = data['order_number']
-
-                    self.total_amount = data['total_amount']
-
-                    self.email = data['email']
-
-            
-
-            temp_order = TempOrder(temp_order_data)
-
-            # Get payment method from form
-            payment_method = request.POST.get('payment_method', 'payfast')
-            
-            # Store payment method in session for later use
-            request.session['payment_method'] = payment_method
-
-            if payment_method == 'paystack':
-                # Redirect to Paystack payment page
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': True,
-                        'order_number': 'PENDING',
-                        'payment_required': True,
-                        'redirect_url': '/payment/paystack/'
-                    })
-                else:
-                    return redirect('store:paystack_payment')
-            else:
-                # Default to PayFast
-                payfast_payment = PayFastPayment(temp_order, request)
-                payment_form = payfast_payment.get_payment_form()
-
-                # Return payment form data for AJAX requests
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({
-                        'success': True,
-                        'order_number': 'PENDING',
-                        'payment_required': True,
-                        'payment_form': payment_form
-                    })
-
-                # For regular form submission, render payment redirect page
-                return render(request, 'store/payment_redirect.html', {
-                    'order': temp_order,
-                    'payment_form': payment_form
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'order_number': order.order_number,
+                    'payment_required': False,
+                    'redirect_url': order.get_absolute_url(),
                 })
+
+            return redirect('store:order_detail', order_id=order.id)
 
 
 
@@ -3776,7 +3721,16 @@ def order_detail(request, order_id):
     
     # Render order detail page
     return render(request, 'store/order_detail.html', {
-        'order': order
+        'order': order,
+        'manual_payment': {
+            'bank_name': settings.ORDER_PAYMENT_BANK_NAME,
+            'account_name': settings.ORDER_PAYMENT_ACCOUNT_NAME,
+            'account_number': settings.ORDER_PAYMENT_ACCOUNT_NUMBER,
+            'branch_code': settings.ORDER_PAYMENT_BRANCH_CODE,
+            'account_type': settings.ORDER_PAYMENT_ACCOUNT_TYPE,
+            'proof_email': settings.ORDER_PAYMENT_PROOF_EMAIL,
+            'whatsapp': settings.ORDER_PAYMENT_WHATSAPP,
+        }
     })
 
 

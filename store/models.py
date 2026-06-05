@@ -381,7 +381,7 @@ class Order(models.Model):
 
     STATUS_CHOICES = [
 
-        ('pending_payment', 'Pending Payment'),
+        ('pending_payment', 'Awaiting Proof of Payment'),
 
         ('paid', 'Paid'),
 
