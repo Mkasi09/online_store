@@ -139,22 +139,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Manual EFT / proof of payment instructions
 # ==========================================
 # Update these values with the store's real banking and contact details.
-ORDER_PAYMENT_BANK_NAME = 'Your Bank Name'
+ORDER_PAYMENT_BANK_NAME = 'Tyebank'
 ORDER_PAYMENT_ACCOUNT_NAME = 'iPhone Store'
-ORDER_PAYMENT_ACCOUNT_NUMBER = '0000000000'
-ORDER_PAYMENT_BRANCH_CODE = '000000'
+ORDER_PAYMENT_ACCOUNT_NUMBER = '5106 0564 069'
+ORDER_PAYMENT_BRANCH_CODE = '678910'
 ORDER_PAYMENT_ACCOUNT_TYPE = 'Current Account'
-ORDER_PAYMENT_PROOF_EMAIL = 'payments@example.com'
-ORDER_PAYMENT_WHATSAPP = '+27 00 000 0000'
+ORDER_PAYMENT_PROOF_EMAIL = 'iphonestorequaries@gmail.com'
+ORDER_PAYMENT_WHATSAPP = '0688833737'
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'umpmerch@gmail.com'
-EMAIL_HOST_PASSWORD = 'pwwb oexa gkah fbfd'
-DEFAULT_FROM_EMAIL = 'UMP Merch <UmpMerch@gmail.com>'
+EMAIL_HOST_USER = 'iphonestorequaries@gmail.com'
+EMAIL_HOST_PASSWORD = 'syky cllj oaxb ednp'
+DEFAULT_FROM_EMAIL = 'iPhone Store <iphonestorequaries@gmail.com>'
 
 
 # PayFast Payment Gateway Configuration

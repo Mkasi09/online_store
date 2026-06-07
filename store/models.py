@@ -27,33 +27,13 @@ class PendingOrder(models.Model):
 
 class iPhoneModel(models.Model):
 
-    """iPhone model information (iPhone 6 to iPhone 17)"""
+    """iPhone model information with real product images"""
 
     MODEL_CHOICES = [
-
-        ('iPhone 6', 'iPhone 6'),
-
-        ('iPhone 6 Plus', 'iPhone 6 Plus'),
-
-        ('iPhone 6s', 'iPhone 6s'),
-
-        ('iPhone 6s Plus', 'iPhone 6s Plus'),
-
-        ('iPhone SE (1st gen)', 'iPhone SE (1st gen)'),
-
-        ('iPhone 7', 'iPhone 7'),
-
-        ('iPhone 7 Plus', 'iPhone 7 Plus'),
-
-        ('iPhone 8', 'iPhone 8'),
-
-        ('iPhone 8 Plus', 'iPhone 8 Plus'),
 
         ('iPhone X', 'iPhone X'),
 
         ('iPhone XR', 'iPhone XR'),
-
-        ('iPhone XS', 'iPhone XS'),
 
         ('iPhone XS Max', 'iPhone XS Max'),
 
@@ -62,12 +42,6 @@ class iPhoneModel(models.Model):
         ('iPhone 11 Pro', 'iPhone 11 Pro'),
 
         ('iPhone 11 Pro Max', 'iPhone 11 Pro Max'),
-
-        ('iPhone SE (2nd gen)', 'iPhone SE (2nd gen)'),
-
-        ('iPhone 12 mini', 'iPhone 12 mini'),
-
-        ('iPhone 12', 'iPhone 12'),
 
         ('iPhone 12 Pro', 'iPhone 12 Pro'),
 
@@ -81,8 +55,6 @@ class iPhoneModel(models.Model):
 
         ('iPhone 13 Pro Max', 'iPhone 13 Pro Max'),
 
-        ('iPhone SE (3rd gen)', 'iPhone SE (3rd gen)'),
-
         ('iPhone 14', 'iPhone 14'),
 
         ('iPhone 14 Plus', 'iPhone 14 Plus'),
@@ -91,25 +63,11 @@ class iPhoneModel(models.Model):
 
         ('iPhone 14 Pro Max', 'iPhone 14 Pro Max'),
 
-        ('iPhone 15', 'iPhone 15'),
-
-        ('iPhone 15 Plus', 'iPhone 15 Plus'),
-
-        ('iPhone 15 Pro', 'iPhone 15 Pro'),
-
-        ('iPhone 15 Pro Max', 'iPhone 15 Pro Max'),
-
         ('iPhone 16', 'iPhone 16'),
 
         ('iPhone 16 Plus', 'iPhone 16 Plus'),
 
-        ('iPhone 16 Pro', 'iPhone 16 Pro'),
-
-        ('iPhone 16 Pro Max', 'iPhone 16 Pro Max'),
-
         ('iPhone 17', 'iPhone 17'),
-
-        ('iPhone 17 Plus', 'iPhone 17 Plus'),
 
         ('iPhone 17 Pro', 'iPhone 17 Pro'),
 
@@ -150,6 +108,7 @@ class Color(models.Model):
     COLOR_CHOICES = [
 
         ('Black', 'Black'),
+        ('Jet Black', 'Jet Black'),
 
         ('White', 'White'),
 
@@ -172,6 +131,7 @@ class Color(models.Model):
         ('Yellow', 'Yellow'),
 
         ('Orange', 'Orange'),
+        ('Coral', 'Coral'),
 
         ('Pacific Blue', 'Pacific Blue'),
 
@@ -186,6 +146,7 @@ class Color(models.Model):
         ('Starlight', 'Starlight'),
 
         ('Midnight', 'Midnight'),
+        ('Midnight Green', 'Midnight Green'),
 
         ('Pink', 'Pink'),
 
@@ -204,6 +165,12 @@ class Color(models.Model):
         ('Black Titanium', 'Black Titanium'),
 
         ('Desert Titanium', 'Desert Titanium'),
+
+        ('Space Black', 'Space Black'),
+
+        ('Teal', 'Teal'),
+
+        ('Ultramarine', 'Ultramarine'),
 
     ]
 

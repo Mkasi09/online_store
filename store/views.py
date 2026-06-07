@@ -1613,17 +1613,39 @@ class CartSummaryView(View):
 
 
 def home(request):
-    # Get featured products (mixed)
-    featured_products = iPhoneProduct.objects.filter(is_active=True).order_by('-created_at')[:8]
+    # Get featured products with one product from each model.
+    featured_products = []
+    featured_models = iPhoneModel.objects.filter(
+        iphoneproduct__is_active=True,
+    ).distinct().order_by('-release_year', 'name')[:8]
+    for model in featured_models:
+        product = iPhoneProduct.objects.filter(
+            iphone_model=model,
+            is_active=True,
+            condition='new',
+        ).order_by('price').first()
+        if product is None:
+            product = iPhoneProduct.objects.filter(
+                iphone_model=model,
+                is_active=True,
+            ).order_by('price').first()
+        if product is not None:
+            featured_products.append(product)
     
     # Get new phones
     new_phones = iPhoneProduct.objects.filter(is_active=True, condition='new').order_by('-created_at')[:4]
     
-    # Get pre-owned phones (refurbished and used)
-    pre_owned_phones = iPhoneProduct.objects.filter(
-        is_active=True, 
-        condition__in=['refurbished', 'used']
-    ).order_by('-created_at')[:4]
+    # Get pre-owned phones from requested model families.
+    pre_owned_model_names = ('iPhone 11', 'iPhone XR', 'iPhone 12 Pro', 'iPhone 13')
+    pre_owned_phones = []
+    for model_name in pre_owned_model_names:
+        product = iPhoneProduct.objects.filter(
+            iphone_model__name=model_name,
+            is_active=True,
+            condition__in=['used', 'refurbished'],
+        ).order_by('price').first()
+        if product is not None:
+            pre_owned_phones.append(product)
 
     latest_models = iPhoneModel.objects.all().order_by('-release_year')[:6]
 
