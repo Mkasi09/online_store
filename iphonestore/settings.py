@@ -154,6 +154,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
+EMAIL_TIMEOUT = 8
 EMAIL_HOST_USER = 'iphonestorequaries@gmail.com'
 EMAIL_HOST_PASSWORD = 'sykyclljoaxbednp'
 DEFAULT_FROM_EMAIL = 'iPhone Store <iphonestorequaries@gmail.com>'

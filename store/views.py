@@ -2391,7 +2391,7 @@ def send_manual_payment_email(order, request):
             fail_silently=False,
         )
         return sent_count > 0
-    except Exception:
+    except BaseException:
         logger.exception("Failed to send payment email for order %s", order.order_number)
         return False
 
