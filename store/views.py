@@ -179,8 +179,13 @@ def send_brevo_email(subject, message, recipient_email):
         },
         method='POST',
     )
-    with urllib.request.urlopen(request, timeout=12) as response:
-        return 200 <= response.status < 300
+    try:
+        with urllib.request.urlopen(request, timeout=12) as response:
+            return 200 <= response.status < 300
+    except urllib.error.HTTPError as error:
+        error_body = error.read().decode('utf-8', errors='replace')
+        logger.error("Brevo email API error %s: %s", error.code, error_body)
+        raise
 
 
 

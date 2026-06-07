@@ -161,9 +161,9 @@ EMAIL_HOST_PASSWORD = 'sykyclljoaxbednp'
 DEFAULT_FROM_EMAIL = 'iPhone Store <iphonestorequaries@gmail.com>'
 
 # Render blocks SMTP ports on many services. Use Brevo's HTTPS API when this is set.
-BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
-BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL)
-BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Store')
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
+BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL).strip()
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Store').strip()
 
 
 # PayFast Payment Gateway Configuration
