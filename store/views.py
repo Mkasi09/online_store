@@ -127,6 +127,7 @@ from .payfast import PayFastPayment, verify_payfast_signature
 
 
 import json
+import logging
 
 
 
@@ -146,6 +147,9 @@ from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.mail import send_mail
+
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -2350,40 +2354,46 @@ def update_profile(request):
 
 def send_manual_payment_email(order, request):
     """Send bank details and proof-of-payment instructions for a new order."""
-    bank_details = [
-        f"Bank: {settings.ORDER_PAYMENT_BANK_NAME}",
-        f"Account name: {settings.ORDER_PAYMENT_ACCOUNT_NAME}",
-        f"Account number: {settings.ORDER_PAYMENT_ACCOUNT_NUMBER}",
-        f"Branch code: {settings.ORDER_PAYMENT_BRANCH_CODE}",
-        f"Account type: {settings.ORDER_PAYMENT_ACCOUNT_TYPE}",
-        f"Reference: {order.order_number}",
-    ]
-    proof_email = settings.ORDER_PAYMENT_PROOF_EMAIL
-    whatsapp = settings.ORDER_PAYMENT_WHATSAPP
-    order_url = request.build_absolute_uri(order.get_absolute_url())
+    try:
+        bank_details = [
+            f"Bank: {settings.ORDER_PAYMENT_BANK_NAME}",
+            f"Account name: {settings.ORDER_PAYMENT_ACCOUNT_NAME}",
+            f"Account number: {settings.ORDER_PAYMENT_ACCOUNT_NUMBER}",
+            f"Branch code: {settings.ORDER_PAYMENT_BRANCH_CODE}",
+            f"Account type: {settings.ORDER_PAYMENT_ACCOUNT_TYPE}",
+            f"Reference: {order.order_number}",
+        ]
+        proof_email = settings.ORDER_PAYMENT_PROOF_EMAIL
+        whatsapp = settings.ORDER_PAYMENT_WHATSAPP
+        order_url = request.build_absolute_uri(order.get_absolute_url())
 
-    message = (
-        f"Hi {order.user.get_full_name() or order.user.username},\n\n"
-        f"Thank you for your order #{order.order_number}.\n\n"
-        f"Amount due: R{order.total_amount}\n\n"
-        "Please pay using the banking details below:\n"
-        f"{chr(10).join(bank_details)}\n\n"
-        "After making payment, please send proof of payment by email or WhatsApp:\n"
-        f"Email: {proof_email}\n"
-        f"WhatsApp: {whatsapp}\n\n"
-        "Your order status will be updated to Processing once proof of payment has been received and confirmed.\n\n"
-        f"View your order: {order_url}\n\n"
-        "Thank you,\n"
-        "iPhone Store"
-    )
+        customer_name = order.user.get_full_name() or order.user.username
+        message = (
+            f"Hi {customer_name},\n\n"
+            f"Thank you for your order #{order.order_number}.\n\n"
+            f"Amount due: R{order.total_amount}\n\n"
+            "Please pay using the banking details below:\n"
+            f"{chr(10).join(bank_details)}\n\n"
+            "After making payment, please send proof of payment by email or WhatsApp:\n"
+            f"Email: {proof_email}\n"
+            f"WhatsApp: {whatsapp}\n\n"
+            "Your order status will be updated to Processing once proof of payment has been received and confirmed.\n\n"
+            f"View your order: {order_url}\n\n"
+            "Thank you,\n"
+            "iPhone Store"
+        )
 
-    send_mail(
-        subject=f"Order #{order.order_number} payment instructions",
-        message=message,
-        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-        recipient_list=[order.email],
-        fail_silently=True,
-    )
+        sent_count = send_mail(
+            subject=f"Order #{order.order_number} payment instructions",
+            message=message,
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
+            recipient_list=[order.email],
+            fail_silently=False,
+        )
+        return sent_count > 0
+    except Exception:
+        logger.exception("Failed to send payment email for order %s", order.order_number)
+        return False
 
 
 @login_required
@@ -2660,18 +2670,25 @@ def checkout(request):
                 cart_item.product.save()
 
             cart.cartitem_set.all().delete()
-            send_manual_payment_email(order, request)
+            email_sent = send_manual_payment_email(order, request)
 
-            messages.success(
-                request,
-                'Order placed. Banking details have been emailed to you. '
-                'Send proof of payment by email or WhatsApp so your order can be processed.'
-            )
+            if email_sent:
+                messages.success(
+                    request,
+                    'Order placed. Banking details have been emailed to you. '
+                    'Send proof of payment by email or WhatsApp so your order can be processed.'
+                )
+            else:
+                messages.warning(
+                    request,
+                    'Order placed. Email could not be sent, but your banking details are shown on this order page.'
+                )
 
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({
                     'success': True,
                     'order_number': order.order_number,
+                    'email_sent': email_sent,
                     'payment_required': False,
                     'redirect_url': order.get_absolute_url(),
                 })
