@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -158,6 +159,11 @@ EMAIL_TIMEOUT = 8
 EMAIL_HOST_USER = 'iphonestorequaries@gmail.com'
 EMAIL_HOST_PASSWORD = 'sykyclljoaxbednp'
 DEFAULT_FROM_EMAIL = 'iPhone Store <iphonestorequaries@gmail.com>'
+
+# Render blocks SMTP ports on many services. Use Brevo's HTTPS API when this is set.
+BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL)
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Store')
 
 
 # PayFast Payment Gateway Configuration

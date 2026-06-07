@@ -128,6 +128,8 @@ from .payfast import PayFastPayment, verify_payfast_signature
 
 import json
 import logging
+import urllib.error
+import urllib.request
 
 
 
@@ -150,6 +152,35 @@ from django.core.mail import send_mail
 
 
 logger = logging.getLogger(__name__)
+
+
+def send_brevo_email(subject, message, recipient_email):
+    """Send transactional email through Brevo's HTTPS API."""
+    payload = {
+        'sender': {
+            'name': settings.BREVO_SENDER_NAME,
+            'email': settings.BREVO_SENDER_EMAIL,
+        },
+        'to': [{'email': recipient_email}],
+        'subject': subject,
+        'textContent': message,
+        'replyTo': {
+            'email': settings.ORDER_PAYMENT_PROOF_EMAIL,
+            'name': 'iPhone Store',
+        },
+    }
+    request = urllib.request.Request(
+        'https://api.brevo.com/v3/smtp/email',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'api-key': settings.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        method='POST',
+    )
+    with urllib.request.urlopen(request, timeout=12) as response:
+        return 200 <= response.status < 300
 
 
 
@@ -2383,8 +2414,12 @@ def send_manual_payment_email(order, request):
             "iPhone Store"
         )
 
+        subject = f"Order #{order.order_number} payment instructions"
+        if settings.BREVO_API_KEY:
+            return send_brevo_email(subject, message, order.email)
+
         sent_count = send_mail(
-            subject=f"Order #{order.order_number} payment instructions",
+            subject=subject,
             message=message,
             from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
             recipient_list=[order.email],
