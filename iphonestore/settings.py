@@ -198,6 +198,7 @@ ORDER_PAYMENT_ACCOUNT_NUMBER = '6316 3330 475'
 ORDER_PAYMENT_BRANCH_CODE = '250655'
 ORDER_PAYMENT_ACCOUNT_TYPE = 'Current Account'
 ORDER_PAYMENT_PROOF_EMAIL = 'orders@iphoneplugs.co.za'
+ORDER_PAYMENT_PROOF_EMAIL1 = 'iphonestorequaries@gmail.com'
 ORDER_PAYMENT_WHATSAPP = '0688833737'
 
 # Email configuration
@@ -213,7 +214,7 @@ DEFAULT_FROM_EMAIL = 'iPhone Plug <iphonestorequaries@gmail.com>'
 
 # Use the Brevo HTTPS API when configured; otherwise Django sends through Gmail SMTP.
 BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
-BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL).strip()
+BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL1).strip()
 BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Plug').strip()
 EMAIL_LOGO_URL = os.environ.get('EMAIL_LOGO_URL', '').strip()
 
