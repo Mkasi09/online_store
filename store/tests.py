@@ -1,7 +1,7 @@
 import random
 from datetime import date
 from decimal import Decimal
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -79,6 +79,35 @@ class EmailConfigurationTests(SimpleTestCase):
     def test_invalid_tls_value_is_rejected(self):
         with self.assertRaisesMessage(ValueError, 'EMAIL_USE_TLS must be a boolean value.'):
             _email_config({'EMAIL_USE_TLS': 'sometimes'})
+
+
+class EmailSendingTests(SimpleTestCase):
+    def test_manual_payment_email_uses_django_mail_with_inline_logo(self):
+        from store.views import send_manual_payment_email
+
+        order = Mock(
+            user=None,
+            order_number='ORDER-123',
+            total_amount=Decimal('125.00'),
+            email='buyer@example.com',
+        )
+        order.get_absolute_url.return_value = '/orders/ORDER-123/'
+        request = Mock()
+        request.build_absolute_uri.side_effect = lambda path: f'https://store.example.test{path}'
+
+        with (
+            patch('store.views.render_to_string', side_effect=['plain body', 'html body']) as render,
+            patch('store.views.EmailMultiAlternatives') as email_class,
+        ):
+            email_class.return_value.send.return_value = 1
+
+            self.assertTrue(send_manual_payment_email(order, request))
+
+        self.assertEqual(email_class.call_args.kwargs['to'], [order.email])
+        html_context = render.call_args_list[1].args[1]
+        self.assertEqual(html_context['logo_url'], 'cid:iphone-plug-logo')
+        email_class.return_value.attach_alternative.assert_called_once_with('html body', 'text/html')
+        email_class.return_value.send.assert_called_once_with(fail_silently=False)
 
 
 class CatalogReplacementTests(TestCase):

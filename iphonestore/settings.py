@@ -211,13 +211,6 @@ EMAIL_HOST_USER = _EMAIL_CONFIG['user']
 EMAIL_HOST_PASSWORD = _EMAIL_CONFIG['password']
 DEFAULT_FROM_EMAIL = 'iPhone Plug <iphonestorequaries@gmail.com>'
 
-# Render blocks SMTP ports on many services. Use Brevo's HTTPS API when this is set.
-BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
-BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL).strip()
-BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Plug').strip()
-EMAIL_LOGO_URL = os.environ.get('EMAIL_LOGO_URL', '').strip()
-
-
 # PayFast Payment Gateway Configuration
 # =====================================
 # Mode: 'sandbox' for testing, 'live' for production
