@@ -9,7 +9,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from iphonestore.settings import BASE_DIR, _database_config
+from iphonestore.settings import BASE_DIR, _database_config, _email_config
 from store.management.commands.populate_iphones import Command
 from store.discounts import InvalidDiscountCode, calculate_checkout_discount
 from store.models import (
@@ -47,6 +47,38 @@ class DatabaseConfigurationTests(SimpleTestCase):
         self.assertEqual(database['PORT'], 5432)
         self.assertEqual(database['OPTIONS']['sslmode'], 'require')
         self.assertEqual(database['CONN_MAX_AGE'], 600)
+
+
+class EmailConfigurationTests(SimpleTestCase):
+    def test_gmail_defaults_do_not_include_a_password(self):
+        email = _email_config({})
+
+        self.assertEqual(email['host'], 'smtp.gmail.com')
+        self.assertEqual(email['port'], 587)
+        self.assertTrue(email['use_tls'])
+        self.assertEqual(email['user'], 'iphonestorequaries@gmail.com')
+        self.assertEqual(email['password'], '')
+
+    def test_email_settings_can_be_overridden_from_environment(self):
+        email = _email_config({
+            'EMAIL_HOST': 'smtp.example.test',
+            'EMAIL_PORT': '465',
+            'EMAIL_USE_TLS': 'false',
+            'EMAIL_HOST_USER': 'mail@example.test',
+            'EMAIL_HOST_PASSWORD': 'configured-secret',
+        })
+
+        self.assertEqual(email, {
+            'host': 'smtp.example.test',
+            'port': 465,
+            'use_tls': False,
+            'user': 'mail@example.test',
+            'password': 'configured-secret',
+        })
+
+    def test_invalid_tls_value_is_rejected(self):
+        with self.assertRaisesMessage(ValueError, 'EMAIL_USE_TLS must be a boolean value.'):
+            _email_config({'EMAIL_USE_TLS': 'sometimes'})
 
 
 class CatalogReplacementTests(TestCase):

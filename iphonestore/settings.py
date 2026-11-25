@@ -110,6 +110,30 @@ def _database_config(database_url):
 DATABASES = _database_config(os.environ.get('DATABASE_URL'))
 
 
+def _email_config(environ):
+    tls_value = environ.get('EMAIL_USE_TLS', 'true').strip().lower()
+    tls_options = {
+        '1': True,
+        'true': True,
+        'yes': True,
+        'on': True,
+        '0': False,
+        'false': False,
+        'no': False,
+        'off': False,
+    }
+    if tls_value not in tls_options:
+        raise ValueError('EMAIL_USE_TLS must be a boolean value.')
+
+    return {
+        'host': environ.get('EMAIL_HOST', 'smtp.gmail.com').strip(),
+        'port': int(environ.get('EMAIL_PORT', '587')),
+        'use_tls': tls_options[tls_value],
+        'user': environ.get('EMAIL_HOST_USER', 'iphonestorequaries@gmail.com').strip(),
+        'password': environ.get('EMAIL_HOST_PASSWORD', ''),
+    }
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -178,12 +202,13 @@ ORDER_PAYMENT_WHATSAPP = '0688833737'
 
 # Email configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+_EMAIL_CONFIG = _email_config(os.environ)
+EMAIL_HOST = _EMAIL_CONFIG['host']
+EMAIL_PORT = _EMAIL_CONFIG['port']
+EMAIL_USE_TLS = _EMAIL_CONFIG['use_tls']
 EMAIL_TIMEOUT = 8
-EMAIL_HOST_USER = 'iphonestorequaries@gmail.com'
-EMAIL_HOST_PASSWORD = 'sykyclljoaxbednp'
+EMAIL_HOST_USER = _EMAIL_CONFIG['user']
+EMAIL_HOST_PASSWORD = _EMAIL_CONFIG['password']
 DEFAULT_FROM_EMAIL = 'iPhone Plug <iphonestorequaries@gmail.com>'
 
 # Render blocks SMTP ports on many services. Use Brevo's HTTPS API when this is set.
