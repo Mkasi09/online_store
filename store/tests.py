@@ -5,10 +5,11 @@ from unittest.mock import patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
-from django.test import TestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
+from iphonestore.settings import BASE_DIR, _database_config
 from store.management.commands.populate_iphones import Command
 from store.discounts import InvalidDiscountCode, calculate_checkout_discount
 from store.models import (
@@ -21,6 +22,31 @@ from store.models import (
     iPhoneProduct,
     ProductReview,
 )
+
+
+class DatabaseConfigurationTests(SimpleTestCase):
+    def test_missing_database_url_keeps_existing_sqlite_database(self):
+        for database_url in (None, ''):
+            with self.subTest(database_url=database_url):
+                database = _database_config(database_url)['default']
+
+                self.assertEqual(database['ENGINE'], 'django.db.backends.sqlite3')
+                self.assertEqual(database['NAME'], BASE_DIR / 'db.sqlite3')
+
+    def test_postgresql_database_url_is_parsed_without_connecting(self):
+        database = _database_config(
+            'postgresql://store_user:p%40ssword@db.example.test:5432/online_store'
+            '?sslmode=require'
+        )['default']
+
+        self.assertEqual(database['ENGINE'], 'django.db.backends.postgresql')
+        self.assertEqual(database['NAME'], 'online_store')
+        self.assertEqual(database['USER'], 'store_user')
+        self.assertEqual(database['PASSWORD'], 'p@ssword')
+        self.assertEqual(database['HOST'], 'db.example.test')
+        self.assertEqual(database['PORT'], 5432)
+        self.assertEqual(database['OPTIONS']['sslmode'], 'require')
+        self.assertEqual(database['CONN_MAX_AGE'], 600)
 
 
 class CatalogReplacementTests(TestCase):

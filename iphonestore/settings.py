@@ -14,6 +14,8 @@ import os
 from datetime import date
 from pathlib import Path
 
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -86,12 +88,21 @@ WSGI_APPLICATION = 'iphonestore.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+def _database_config(database_url):
+    if database_url:
+        return {
+            'default': dj_database_url.parse(database_url, conn_max_age=600),
+        }
+
+    return {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+
+
+DATABASES = _database_config(os.environ.get('DATABASE_URL'))
 
 
 # Password validation
