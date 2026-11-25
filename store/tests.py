@@ -831,6 +831,9 @@ class ProductReviewTests(TestCase):
     def test_product_detail_renders_star_form_and_approved_star_display(self):
         self.client.force_login(self.user)
         detail_before = self.client.get(self.product.get_absolute_url())
+        self.assertContains(detail_before, 'class="container py-4 product-detail-page"')
+        self.assertContains(detail_before, 'href="#reviews"')
+        self.assertContains(detail_before, 'id="reviews"')
         self.assertContains(detail_before, 'review-star-input')
         self.assertContains(detail_before, 'role="radiogroup"')
         self.assertContains(detail_before, 'aria-label="Choose a 1 to 5 star rating"')

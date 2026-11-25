@@ -3,7 +3,7 @@
 {% block title %}{{ product.iphone_model.name }} - {{ product.color.name }} - iPhone Plug{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container py-4 product-detail-page">
     <!-- Breadcrumb -->
     <nav aria-label="breadcrumb" class="mb-4">
         <ol class="breadcrumb">
@@ -33,11 +33,12 @@
         <div class="col-lg-6">
             <div class="mb-4">
                 <h1 class="display-5 fw-bold mb-3">{{ product.iphone_model.name }}</h1>
-                <div class="d-flex align-items-center mb-3">
+                <a href="#reviews" class="btn btn-outline-primary btn-sm mb-3">View reviews</a>
+                <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
                     <span class="badge 
                         {% if product.condition == 'new' %}bg-primary
                         {% elif product.condition == 'refurbished' %}bg-info
-                        {% else %}bg-secondary{% endif %} me-2 fs-6">
+                        {% else %}bg-secondary{% endif %} fs-6">
                         {{ product.get_condition_display }}
                         {% if product.grade %} - Grade {{ product.get_grade_display }}{% endif %}
                     </span>
@@ -214,7 +215,7 @@
         </div>
     </div>
 
-    <section class="mt-5 review-section" aria-labelledby="reviews-heading">
+    <section id="reviews" class="mt-5 review-section" aria-labelledby="reviews-heading">
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
             <h3 id="reviews-heading" class="mb-0">Customer Reviews</h3>
             {% if review_summary.review_count %}
@@ -383,6 +384,21 @@
 {% endif %}
 
 <style>
+.product-detail-page {
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.product-detail-page .row > * {
+    min-width: 0;
+}
+
+.floating-cart-bar .product-info {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .review-section,
 .review-card,
 .review-form {
