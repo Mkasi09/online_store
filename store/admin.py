@@ -1,6 +1,7 @@
 from django.contrib import admin
+from django.utils.html import format_html
 
-from .models import iPhoneModel, Color, iPhoneProduct, Cart, CartItem, Order, OrderItem
+from .models import iPhoneModel, Color, iPhoneProduct, Cart, CartItem, Order, OrderItem, ProductReview
 
 
 
@@ -68,13 +69,15 @@ class iPhoneProductAdmin(admin.ModelAdmin):
 
         ('Product Images', {
 
-            'fields': ('image', 'cover_photo'),
+            'fields': ('image', 'cover_photo', 'image_url'),
 
-            'description': 'Upload product images. Cover photo will be used as the main image in product listings.'
+            'description': 'Uploaded images override the AppleDB catalog image when present.'
 
         }),
 
     )
+
+    readonly_fields = ['image_url']
 
     
 
@@ -82,11 +85,15 @@ class iPhoneProductAdmin(admin.ModelAdmin):
 
         if obj.cover_photo:
 
-            return f'<img src="{obj.cover_photo.url}" width="50" height="50" style="object-fit: cover;" />'
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: contain;" />', obj.cover_photo.url)
+
+        elif obj.image_url:
+
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: contain;" />', obj.image_url)
 
         elif obj.image:
 
-            return f'<img src="{obj.image.url}" width="50" height="50" style="object-fit: cover;" />'
+            return format_html('<img src="{}" width="50" height="50" style="object-fit: cover;" />', obj.image.url)
 
         return "No Image"
 
@@ -94,6 +101,24 @@ class iPhoneProductAdmin(admin.ModelAdmin):
 
     cover_photo_thumbnail.allow_tags = True
 
+
+
+@admin.register(ProductReview)
+class ProductReviewAdmin(admin.ModelAdmin):
+    list_display = ['product', 'user', 'rating', 'status', 'verified_purchase', 'created_at']
+    list_filter = ['status', 'verified_purchase', 'rating', 'created_at']
+    search_fields = ['user__username', 'user__email', 'comment', 'product__iphone_model__name']
+    readonly_fields = ['product', 'user', 'rating', 'comment', 'verified_purchase', 'created_at', 'updated_at']
+    actions = ['approve_reviews', 'reject_reviews']
+    ordering = ['status', '-created_at']
+
+    @admin.action(description='Approve selected reviews')
+    def approve_reviews(self, request, queryset):
+        queryset.update(status='approved')
+
+    @admin.action(description='Reject selected reviews')
+    def reject_reviews(self, request, queryset):
+        queryset.update(status='rejected')
 
 
 @admin.register(Cart)
@@ -128,7 +153,7 @@ class OrderItemInline(admin.TabularInline):
 
     extra = 0
 
-    readonly_fields = ['product', 'quantity', 'price']
+    readonly_fields = ['product', 'quantity', 'price', 'product_name', 'product_color', 'product_storage', 'product_grade']
 
 
 

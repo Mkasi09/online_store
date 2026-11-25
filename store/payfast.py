@@ -1,5 +1,5 @@
 """
-PayFast Payment Gateway Integration for iPhone Store
+PayFast Payment Gateway Integration for iPhone Plug
 """
 
 import hashlib

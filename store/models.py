@@ -30,56 +30,36 @@ class iPhoneModel(models.Model):
     """iPhone model information with real product images"""
 
     MODEL_CHOICES = [
-
+        ('iPhone 7', 'iPhone 7'),
+        ('iPhone 8', 'iPhone 8'),
         ('iPhone X', 'iPhone X'),
-
         ('iPhone XR', 'iPhone XR'),
-
-        ('iPhone XS Max', 'iPhone XS Max'),
-
         ('iPhone 11', 'iPhone 11'),
-
-        ('iPhone 11 Pro', 'iPhone 11 Pro'),
-
-        ('iPhone 11 Pro Max', 'iPhone 11 Pro Max'),
-
-        ('iPhone 12 Pro', 'iPhone 12 Pro'),
-
-        ('iPhone 12 Pro Max', 'iPhone 12 Pro Max'),
-
-        ('iPhone 13 mini', 'iPhone 13 mini'),
-
+        ('iPhone 12', 'iPhone 12'),
         ('iPhone 13', 'iPhone 13'),
-
         ('iPhone 13 Pro', 'iPhone 13 Pro'),
-
         ('iPhone 13 Pro Max', 'iPhone 13 Pro Max'),
-
         ('iPhone 14', 'iPhone 14'),
-
-        ('iPhone 14 Plus', 'iPhone 14 Plus'),
-
         ('iPhone 14 Pro', 'iPhone 14 Pro'),
-
         ('iPhone 14 Pro Max', 'iPhone 14 Pro Max'),
-
+        ('iPhone 15', 'iPhone 15'),
+        ('iPhone 15 Pro', 'iPhone 15 Pro'),
+        ('iPhone 15 Pro Max', 'iPhone 15 Pro Max'),
         ('iPhone 16', 'iPhone 16'),
-
-        ('iPhone 16 Plus', 'iPhone 16 Plus'),
-
+        ('iPhone 16 Pro', 'iPhone 16 Pro'),
+        ('iPhone 16 Pro Max', 'iPhone 16 Pro Max'),
         ('iPhone 17', 'iPhone 17'),
-
         ('iPhone 17 Pro', 'iPhone 17 Pro'),
-
         ('iPhone 17 Pro Max', 'iPhone 17 Pro Max'),
-
+        ('iPhone 18 Pro', 'iPhone 18 Pro'),
+        ('iPhone 18 Pro Max', 'iPhone 18 Pro Max'),
     ]
 
     
 
     name = models.CharField(max_length=50, choices=MODEL_CHOICES, unique=True)
 
-    release_year = models.IntegerField()
+    release_year = models.IntegerField(null=True, blank=True)
 
     display_size = models.CharField(max_length=20)  # e.g., "6.1 inches"
 
@@ -115,6 +95,7 @@ class Color(models.Model):
         ('Silver', 'Silver'),
 
         ('Space Gray', 'Space Gray'),
+        ('Space Grey', 'Space Grey'),
 
         ('Gold', 'Gold'),
 
@@ -142,11 +123,16 @@ class Color(models.Model):
         ('Alpine Green', 'Alpine Green'),
 
         ('Deep Purple', 'Deep Purple'),
-
+        ('Cosmic Orange', 'Cosmic Orange'),
+        ('Deep Blue', 'Deep Blue'),
         ('Starlight', 'Starlight'),
 
         ('Midnight', 'Midnight'),
         ('Midnight Green', 'Midnight Green'),
+
+        ('Mist Blue', 'Mist Blue'),
+        ('Sage', 'Sage'),
+        ('Lavender', 'Lavender'),
 
         ('Pink', 'Pink'),
 
@@ -250,6 +236,8 @@ class iPhoneProduct(models.Model):
 
     image = models.ImageField(upload_to='iphone_images/', blank=True, null=True)
 
+    image_url = models.URLField(blank=True, max_length=500)
+
     cover_photo = models.ImageField(upload_to='iphone_covers/', blank=True, null=True, help_text="Main cover photo for product listing")
 
     is_active = models.BooleanField(default=True)
@@ -273,11 +261,47 @@ class iPhoneProduct(models.Model):
     
 
     class Meta:
-
-        unique_together = ['iphone_model', 'color', 'storage', 'condition']
+        unique_together = ['iphone_model', 'color', 'storage', 'condition', 'grade']
 
         ordering = ['-created_at']
 
+
+class ProductReview(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    product = models.ForeignKey(iPhoneProduct, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='product_reviews')
+    rating = models.PositiveSmallIntegerField()
+    comment = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    verified_purchase = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['product', 'user']
+        ordering = ['-created_at']
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(rating__gte=1, rating__lte=5),
+                name='store_review_rating_1_to_5',
+            ),
+        ]
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.rating not in range(1, 6):
+            raise ValidationError({'rating': 'Rating must be between 1 and 5.'})
+        if len(self.comment.strip()) < 10:
+            raise ValidationError({'comment': 'Review comment must be at least 10 characters.'})
+
+    def __str__(self):
+        customer_name = self.user.get_full_name() or self.user.username
+        return f'{customer_name} - {self.product.iphone_model.name} ({self.rating}/5)'
 
 
 class Cart(models.Model):
@@ -385,8 +409,10 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending_payment')
 
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
-
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    subtotal_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    discount_code = models.CharField(max_length=50, blank=True)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     # Shipping Address Fields
     shipping_street = models.CharField(max_length=255, default='')
@@ -530,17 +556,33 @@ class OrderItem(models.Model):
 
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
-    product = models.ForeignKey(iPhoneProduct, on_delete=models.CASCADE)
+    product = models.ForeignKey(iPhoneProduct, on_delete=models.SET_NULL, null=True, blank=True)
 
     quantity = models.PositiveIntegerField(default=1)
 
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
+    product_name = models.CharField(max_length=150, blank=True)
+
+    product_color = models.CharField(max_length=50, blank=True)
+
+    product_storage = models.CharField(max_length=10, blank=True)
+
+    product_grade = models.CharField(max_length=20, blank=True)
+
     
 
     def __str__(self):
 
-        return f"{self.quantity} x {self.product.iphone_model.name}"
+        return f"{self.quantity} x {self.product_name or 'Removed product'}"
+
+    def save(self, *args, **kwargs):
+        if self.product_id:
+            self.product_name = self.product.iphone_model.name
+            self.product_color = self.product.color.name
+            self.product_storage = self.product.storage
+            self.product_grade = self.product.grade or ''
+        super().save(*args, **kwargs)
 
     
 

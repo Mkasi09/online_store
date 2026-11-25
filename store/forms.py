@@ -2,6 +2,8 @@ from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 
+from .models import ProductReview
+
 class CustomUserCreationForm(UserCreationForm):
     email = forms.EmailField(required=True, widget=forms.EmailInput(attrs={
         'class': 'form-control',
@@ -45,3 +47,29 @@ class CustomUserCreationForm(UserCreationForm):
         if commit:
             user.save()
         return user
+
+
+class ProductReviewForm(forms.ModelForm):
+    class Meta:
+        model = ProductReview
+        fields = ('rating', 'comment')
+        widgets = {
+            'rating': forms.RadioSelect(attrs={'class': 'review-rating-input'}, choices=[
+                (rating, f'{rating} star{"s" if rating != 1 else ""}')
+                for rating in range(5, 0, -1)
+            ]),
+            'comment': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'maxlength': 2000,
+                'placeholder': 'Share your experience with this iPhone',
+            }),
+        }
+
+    def clean_comment(self):
+        comment = self.cleaned_data['comment'].strip()
+        if len(comment) < 10:
+            raise forms.ValidationError('Review comment must be at least 10 characters.')
+        if len(comment) > 2000:
+            raise forms.ValidationError('Review comment cannot exceed 2000 characters.')
+        return comment

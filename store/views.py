@@ -1,3 +1,7 @@
+import random
+import re
+import secrets
+
 from django.shortcuts import render, get_object_or_404, redirect
 
 
@@ -7,6 +11,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 
 
 from django.db.models import Q
+from django.db.models import Avg, Count
 
 
 
@@ -102,7 +107,17 @@ from django.contrib.auth.forms import AuthenticationForm
 
 
 
-from .models import iPhoneProduct, iPhoneModel, Color, Cart, CartItem, Order, OrderItem
+from .models import (
+    iPhoneProduct,
+    iPhoneModel,
+    Color,
+    Cart,
+    CartItem,
+    Order,
+    OrderItem,
+    ProductReview,
+)
+from .discounts import InvalidDiscountCode, calculate_checkout_discount
 
 
 
@@ -110,7 +125,7 @@ from .models import iPhoneProduct, iPhoneModel, Color, Cart, CartItem, Order, Or
 
 
 
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, ProductReviewForm
 
 
 
@@ -148,13 +163,17 @@ import uuid
 from datetime import datetime, timedelta
 
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.templatetags.static import static
+from email.mime.image import MIMEImage
+from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
 
 
-def send_brevo_email(subject, message, recipient_email):
+def send_brevo_email(subject, text_message, html_message, recipient_email):
     """Send transactional email through Brevo's HTTPS API."""
     payload = {
         'sender': {
@@ -163,10 +182,11 @@ def send_brevo_email(subject, message, recipient_email):
         },
         'to': [{'email': recipient_email}],
         'subject': subject,
-        'textContent': message,
+        'textContent': text_message,
+        'htmlContent': html_message,
         'replyTo': {
             'email': settings.ORDER_PAYMENT_PROOF_EMAIL,
-            'name': 'iPhone Store',
+            'name': 'iPhone Plug',
         },
     }
     request = urllib.request.Request(
@@ -505,78 +525,42 @@ class ProductListView(ListView):
 
 
 
-        # Sort by
+        # Shuffle the unfiltered catalog once and keep that order through pagination.
+        has_filters = any((
+            search_query,
+            model_filter,
+            color_filter,
+            storage_filter,
+            condition_filter,
+        ))
+        self.has_filters = has_filters
+        requested_sort = self.request.GET.get('sort', '')
+        self.shuffle_seed = ''
+        if not has_filters and requested_sort in ('', 'shuffle'):
+            shuffle_seed = self.request.GET.get('shuffle', '')
+            if not re.fullmatch(r'[0-9a-f]{16}', shuffle_seed):
+                shuffle_seed = secrets.token_hex(8)
+            self.shuffle_seed = shuffle_seed
+            self.current_sort = 'shuffle'
+            products = list(queryset.select_related('iphone_model', 'color').order_by(
+                '-created_at',
+                '-pk',
+            ))
+            random.Random(int(shuffle_seed, 16)).shuffle(products)
+            return products
 
+        sort_by = requested_sort or 'newest'
+        if sort_by == 'shuffle':
+            sort_by = 'newest'
 
-
-
-
-
-
-        sort_by = self.request.GET.get('sort', 'newest')
-
-
-
-
-
-
-
+        self.current_sort = sort_by
         if sort_by == 'price_low':
-
-
-
-
-
-
-
             queryset = queryset.order_by('price')
-
-
-
-
-
-
-
         elif sort_by == 'price_high':
-
-
-
-
-
-
-
             queryset = queryset.order_by('-price')
-
-
-
-
-
-
-
         elif sort_by == 'name':
-
-
-
-
-
-
-
             queryset = queryset.order_by('iphone_model__name')
-
-
-
-
-
-
-
-        else:  # newest
-
-
-
-
-
-
-
+        else:
             queryset = queryset.order_by('-created_at')
 
 
@@ -729,8 +713,27 @@ class ProductListView(ListView):
 
 
 
-        context['current_sort'] = self.request.GET.get('sort', 'newest')
+        context['current_sort'] = self.current_sort
+        context['has_active_filters'] = self.has_filters
 
+        pagination_params = self.request.GET.copy()
+        pagination_params.pop('page', None)
+        if self.shuffle_seed:
+            pagination_params['shuffle'] = self.shuffle_seed
+        context['shuffle_seed'] = self.shuffle_seed
+        context['pagination_query'] = pagination_params.urlencode()
+
+        page_obj = context['page_obj']
+        current_page = page_obj.number
+        page_count = page_obj.paginator.num_pages
+        if page_count <= 3:
+            context['page_numbers'] = list(range(1, page_count + 1))
+        elif current_page <= 2:
+            context['page_numbers'] = [1, 2, 3]
+        elif current_page >= page_count - 1:
+            context['page_numbers'] = list(range(page_count - 2, page_count + 1))
+        else:
+            context['page_numbers'] = list(range(current_page - 1, current_page + 2))
 
 
 
@@ -911,19 +914,15 @@ class ProductDetailView(DetailView):
 
         storage_variants = iPhoneProduct.objects.filter(
 
-
-
             iphone_model=product.iphone_model,
-
-
 
             color=product.color,
 
+            condition=product.condition,
 
+            grade=product.grade,
 
             is_active=True
-
-
 
         ).order_by('storage')
 
@@ -943,35 +942,53 @@ class ProductDetailView(DetailView):
 
             iphone_model=product.iphone_model,
 
-
-
             storage=product.storage,
 
+            condition=product.condition,
 
+            grade=product.grade,
 
             is_active=True
 
-
-
         ).select_related('color').order_by('color__name')
 
+        grade_variants = iPhoneProduct.objects.filter(
+            iphone_model=product.iphone_model,
+            color=product.color,
+            storage=product.storage,
+            condition=product.condition,
+            is_active=True
+        ).exclude(grade__isnull=True).order_by('grade')
 
-
+        approved_reviews = ProductReview.objects.filter(
+            product=product,
+            status='approved',
+        ).select_related('user').order_by('-created_at')
+        review_summary = approved_reviews.aggregate(
+            average_rating=Avg('rating'),
+            review_count=Count('id'),
+        )
+        user_review = None
+        if self.request.user.is_authenticated:
+            user_review = ProductReview.objects.filter(
+                product=product,
+                user=self.request.user,
+            ).first()
 
 
 
 
         context['related_products'] = related_products
 
-
-
         context['storage_variants'] = storage_variants
-
-
 
         context['color_variants'] = color_variants
 
-
+        context['grade_variants'] = grade_variants
+        context['approved_reviews'] = approved_reviews
+        context['review_summary'] = review_summary
+        context['user_review'] = user_review
+        context['review_form'] = ProductReviewForm()
 
 
 
@@ -981,12 +998,40 @@ class ProductDetailView(DetailView):
 
 
 
+@login_required
+def submit_product_review(request, product_id):
+    product = get_object_or_404(iPhoneProduct, pk=product_id, is_active=True)
 
+    if request.method != 'POST':
+        return redirect(product.get_absolute_url())
 
+    if ProductReview.objects.filter(product=product, user=request.user).exists():
+        messages.error(request, 'You have already reviewed this product.')
+        return redirect(product.get_absolute_url())
 
+    form = ProductReviewForm(request.POST)
+    if not form.is_valid():
+        for error in form.non_field_errors():
+            messages.error(request, error)
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(request, f'{form.fields[field].label or field}: {error}')
+        return redirect(product.get_absolute_url())
 
+    verified_purchase = OrderItem.objects.filter(
+        order__user=request.user,
+        order__payment_status='completed',
+        product=product,
+    ).exists()
 
-
+    review = form.save(commit=False)
+    review.product = product
+    review.user = request.user
+    review.status = 'pending'
+    review.verified_purchase = verified_purchase
+    review.save()
+    messages.success(request, 'Your review was submitted for approval.')
+    return redirect(product.get_absolute_url())
 
 
 
@@ -995,43 +1040,21 @@ class ProductDetailView(DetailView):
 
 class CartView(View):
 
-
-
-
-
-
-
     def get(self, request):
-
-
-
-
-
-
-
         cart = self.get_or_create_cart()
-
-
-
-
-
-
-
         cart_items = cart.cartitem_set.all()
-
-
-
-
-
-
-
-        
-
-
-
-
-
-
+        subtotal = cart.get_total_price()
+        discount_code = request.session.get('cart_discount_code', '')
+        try:
+            discount_code, discount_amount, total_amount = calculate_checkout_discount(
+                subtotal,
+                discount_code,
+            )
+        except InvalidDiscountCode:
+            discount_code = ''
+            discount_amount = subtotal - subtotal
+            total_amount = subtotal
+            request.session.pop('cart_discount_code', None)
 
         # Calculate estimated delivery date (5 business days excluding weekends)
         from datetime import datetime, timedelta
@@ -1053,29 +1076,35 @@ class CartView(View):
         context = {
 
             'cart': cart,
-
             'cart_items': cart_items,
-
             'estimated_delivery_date': estimated_delivery,
-
+            'cart_subtotal': subtotal,
+            'cart_discount_code': discount_code,
+            'cart_discount_amount': discount_amount,
+            'cart_total': total_amount,
         }
 
         return render(request, 'store/cart.html', context)
 
+    def post(self, request):
+        cart = self.get_or_create_cart()
+        subtotal = cart.get_total_price()
+        submitted_code = request.POST.get('discount_code', '').strip()
 
+        if not submitted_code:
+            request.session.pop('cart_discount_code', None)
+            messages.success(request, 'Discount code cleared.')
+            return redirect('store:cart')
 
+        try:
+            discount_code, _, _ = calculate_checkout_discount(subtotal, submitted_code)
+        except InvalidDiscountCode as error:
+            messages.error(request, str(error))
+            return redirect('store:cart')
 
-
-
-
-    
-
-
-
-
-
-
-
+        request.session['cart_discount_code'] = discount_code
+        messages.success(request, f'Discount code {discount_code} applied to your cart.')
+        return redirect('store:cart')
     def get_or_create_cart(self):
 
 
@@ -1676,13 +1705,13 @@ def home(request):
     new_phones = iPhoneProduct.objects.filter(is_active=True, condition='new').order_by('-created_at')[:4]
     
     # Get pre-owned phones from requested model families.
-    pre_owned_model_names = ('iPhone 11', 'iPhone XR', 'iPhone 12 Pro', 'iPhone 13')
+    pre_owned_model_names = ('iPhone 11', 'iPhone XR', 'iPhone 12', 'iPhone 13 Pro')
     pre_owned_phones = []
     for model_name in pre_owned_model_names:
         product = iPhoneProduct.objects.filter(
             iphone_model__name=model_name,
             is_active=True,
-            condition__in=['used', 'refurbished'],
+            condition='used',
         ).order_by('price').first()
         if product is not None:
             pre_owned_phones.append(product)
@@ -2391,46 +2420,60 @@ def update_profile(request):
 def send_manual_payment_email(order, request):
     """Send bank details and proof-of-payment instructions for a new order."""
     try:
-        bank_details = [
-            f"Bank: {settings.ORDER_PAYMENT_BANK_NAME}",
-            f"Account name: {settings.ORDER_PAYMENT_ACCOUNT_NAME}",
-            f"Account number: {settings.ORDER_PAYMENT_ACCOUNT_NUMBER}",
-            f"Branch code: {settings.ORDER_PAYMENT_BRANCH_CODE}",
-            f"Account type: {settings.ORDER_PAYMENT_ACCOUNT_TYPE}",
-            f"Reference: {order.order_number}",
-        ]
         proof_email = settings.ORDER_PAYMENT_PROOF_EMAIL
         whatsapp = settings.ORDER_PAYMENT_WHATSAPP
         order_url = request.build_absolute_uri(order.get_absolute_url())
+        if order.user:
+            customer_name = order.user.get_full_name() or order.user.username
+        else:
+            customer_name = "Customer"
 
-        customer_name = order.user.get_full_name() or order.user.username
-        message = (
-            f"Hi {customer_name},\n\n"
-            f"Thank you for your order #{order.order_number}.\n\n"
-            f"Amount due: R{order.total_amount}\n\n"
-            "Please pay using the banking details below:\n"
-            f"{chr(10).join(bank_details)}\n\n"
-            "After making payment, please send proof of payment by email or WhatsApp:\n"
-            f"Email: {proof_email}\n"
-            f"WhatsApp: {whatsapp}\n\n"
-            "Your order status will be updated to Processing once proof of payment has been received and confirmed.\n\n"
-            f"View your order: {order_url}\n\n"
-            "Thank you,\n"
-            "iPhone Store"
+        context = {
+            'customer_name': customer_name,
+            'order_number': order.order_number,
+            'amount_due': order.total_amount,
+            'bank_name': settings.ORDER_PAYMENT_BANK_NAME,
+            'account_name': settings.ORDER_PAYMENT_ACCOUNT_NAME,
+            'account_number': settings.ORDER_PAYMENT_ACCOUNT_NUMBER,
+            'branch_code': settings.ORDER_PAYMENT_BRANCH_CODE,
+            'account_type': settings.ORDER_PAYMENT_ACCOUNT_TYPE,
+            'proof_email': proof_email,
+            'whatsapp': whatsapp,
+            'order_url': order_url,
+        }
+        logo_url = getattr(settings, 'EMAIL_LOGO_URL', '').strip()
+        if not logo_url:
+            logo_url = request.build_absolute_uri(static('store/img/iphone-plug-logo.png'))
+
+        text_message = render_to_string('store/emails/payment_instructions.txt', context)
+        html_message = render_to_string(
+            'store/emails/payment_instructions.html',
+            {**context, 'logo_url': logo_url if settings.BREVO_API_KEY else 'cid:iphone-plug-logo'},
         )
 
         subject = f"Order #{order.order_number} payment instructions"
         if settings.BREVO_API_KEY:
-            return send_brevo_email(subject, message, order.email)
+            return send_brevo_email(subject, text_message, html_message, order.email)
 
-        sent_count = send_mail(
+        email = EmailMultiAlternatives(
             subject=subject,
-            message=message,
+            body=text_message,
             from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-            recipient_list=[order.email],
-            fail_silently=False,
+            to=[order.email],
+            reply_to=[proof_email],
         )
-        return sent_count > 0
+        email.attach_alternative(html_message, 'text/html')
+
+        logo_path = Path(settings.STATIC_ROOT) / 'store' / 'img' / 'iphone-plug-logo.png'
+        if not logo_path.exists():
+            logo_path = Path(settings.BASE_DIR) / 'store' / 'static' / 'store' / 'img' / 'iphone-plug-logo.png'
+        if logo_path.exists():
+            logo = MIMEImage(logo_path.read_bytes(), _subtype='png')
+            logo.add_header('Content-ID', '<iphone-plug-logo>')
+            logo.add_header('Content-Disposition', 'inline', filename='iphone-plug-logo.png')
+            email.attach(logo)
+
+        return email.send(fail_silently=False) > 0
     except BaseException:
         logger.exception("Failed to send payment email for order %s", order.order_number)
         return False
@@ -2670,9 +2713,19 @@ def checkout(request):
                     messages.error(request, error)
                     return redirect('store:cart')
 
+            subtotal_amount = cart.get_total_price()
+            try:
+                discount_code, discount_amount, total_amount = calculate_checkout_discount(
+                    subtotal_amount,
+                    request.session.get('cart_discount_code', ''),
+                )
+            except InvalidDiscountCode as error:
+                request.session.pop('cart_discount_code', None)
+                if is_ajax:
+                    return JsonResponse({'success': False, 'error': str(error)})
+                messages.error(request, str(error))
+                return redirect('store:cart')
 
-
-            total_amount = cart.get_total_price()
             phone = request.POST.get('phone', '').strip()
             notes = request.POST.get('notes', '').strip()
 
@@ -2681,6 +2734,9 @@ def checkout(request):
                 session_key=request.session.session_key,
                 status='pending_payment',
                 payment_status='pending',
+                subtotal_amount=subtotal_amount,
+                discount_code=discount_code,
+                discount_amount=discount_amount,
                 total_amount=total_amount,
                 shipping_street=shipping_street,
                 shipping_town=shipping_town,
@@ -2710,7 +2766,14 @@ def checkout(request):
                 cart_item.product.save()
 
             cart.cartitem_set.all().delete()
+            request.session.pop('cart_discount_code', None)
             email_sent = send_manual_payment_email(order, request)
+
+            if discount_code:
+                messages.success(
+                    request,
+                    f'Discount code {discount_code} applied: R{discount_amount} off your order.'
+                )
 
             if email_sent:
                 messages.success(
@@ -3704,13 +3767,11 @@ def payment_cancel(request):
 
             for item in order.get_items():
 
+                if item.product:
 
+                    item.product.stock_quantity += item.quantity
 
-                item.product.stock_quantity += item.quantity
-
-
-
-                item.product.save()
+                    item.product.save()
 
 
 

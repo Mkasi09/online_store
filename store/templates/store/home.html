@@ -1,6 +1,6 @@
 {% extends 'store/base.html' %}
 {% load static %}
-{% block title %}iPhone Store - Home{% endblock %}
+{% block title %}iPhone Plug - Home{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
@@ -9,8 +9,8 @@
         <div class="row align-items-center">
             <div class="col-lg-6">
                 <h1 class="display-4 fw-bold mb-4 text-white">Latest iPhone Collection</h1>
-                <p class="text-white mb-4">Discover complete range of iPhones from iPhone 6 to iPhone 17. All
-                    colors, all storage options, best prices guaranteed.</p>
+                <p class="text-white mb-4">Shop iPhones from iPhone 7 to iPhone 18, with available colors,
+                    storage options, and conditions.</p>
                 <div class="d-flex gap-3 flex-wrap">
                     <a href="{% url 'store:product_list' %}" class="btn btn-primary btn-lg">
                         <i class="fas fa-shopping-bag me-2"></i>Shop Now
@@ -43,6 +43,9 @@
                         {% if product.cover_photo %}
                         <img src="{{ product.cover_photo.url }}" class="card-img-top"
                             alt="{{ product.iphone_model.name }}" style="height: 200px; object-fit: cover;">
+                        {% elif product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top"
+                            alt="{{ product.iphone_model.name }} - {{ product.color.name }}" style="height: 200px; object-fit: contain;">
                         {% elif product.image %}
                         <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.iphone_model.name }}"
                             style="height: 200px; object-fit: cover;">
@@ -132,6 +135,9 @@
                         {% if product.cover_photo %}
                         <img src="{{ product.cover_photo.url }}" class="card-img-top"
                             alt="{{ product.iphone_model.name }}" style="height: 200px; object-fit: cover;">
+                        {% elif product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top"
+                            alt="{{ product.iphone_model.name }} - {{ product.color.name }}" style="height: 200px; object-fit: contain;">
                         {% elif product.image %}
                         <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.iphone_model.name }}"
                             style="height: 200px; object-fit: cover;">
@@ -196,7 +202,7 @@
     <div class="container">
         <div class="text-center mb-5">
             <h2 class="display-5 fw-bold text-dark">Pre-Owned iPhones</h2>
-            <p class="lead text-dark">Quality refurbished and used iPhones at great prices</p>
+            <p class="lead text-dark">Quality pre-owned iPhones at great prices</p>
         </div>
 
         {% if pre_owned_phones %}
@@ -208,6 +214,9 @@
                         {% if product.cover_photo %}
                         <img src="{{ product.cover_photo.url }}" class="card-img-top"
                             alt="{{ product.iphone_model.name }}" style="height: 200px; object-fit: cover;">
+                        {% elif product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top"
+                            alt="{{ product.iphone_model.name }} - {{ product.color.name }}" style="height: 200px; object-fit: contain;">
                         {% elif product.image %}
                         <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.iphone_model.name }}"
                             style="height: 200px; object-fit: cover;">
@@ -256,9 +265,6 @@
         </div>
 
         <div class="text-center mt-4">
-            <a href="{% url 'store:product_list' %}?condition=refurbished" class="btn btn-outline-primary me-2">
-                View Refurbished <i class="fas fa-arrow-right ms-2"></i>
-            </a>
             <a href="{% url 'store:product_list' %}?condition=used" class="btn btn-outline-primary">
                 View Used <i class="fas fa-arrow-right ms-2"></i>
             </a>
@@ -291,6 +297,9 @@
                         {% if product.cover_photo %}
                         <img src="{{ product.cover_photo.url }}" class="card-img-top"
                             alt="{{ product.iphone_model.name }}" style="height: 150px; object-fit: cover;">
+                        {% elif product.image_url %}
+                        <img src="{{ product.image_url }}" class="card-img-top"
+                            alt="{{ product.iphone_model.name }} - {{ product.color.name }}" style="height: 150px; object-fit: contain;">
                         {% elif product.image %}
                         <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.iphone_model.name }}"
                             style="height: 150px; object-fit: cover;">

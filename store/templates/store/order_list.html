@@ -1,14 +1,15 @@
 {% extends 'store/base.html' %}
 
-{% block title %}My Orders - iPhone Store{% endblock %}
+{% block title %}My Orders - iPhone Plug{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <div class="row">
+<div class="container py-4 order-list-page">
+    <div class="row order-list-heading">
         <div class="col-12">
             <h1 class="h3 mb-4">
                 <i class="fas fa-shopping-bag me-2"></i>My Orders
             </h1>
+            <p class="text-muted mb-4">Track your order status, items, and totals.</p>
         </div>
     </div>
 
@@ -16,48 +17,48 @@
     <div class="row">
         {% for order in orders %}
         <div class="col-12 mb-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm order-list-card">
                 <div class="card-body p-3">
-                    <div class="row align-items-center">
-                        <div class="col-2 col-md-1">
+                    <div class="row align-items-center order-list-row">
+                        <div class="col-2 col-md-1 order-list-image">
                             {% with first_item=order.get_items|first %}
-                                {% if first_item.product.cover_photo %}
-                                    <img src="{{ first_item.product.cover_photo.url }}" alt="{{ first_item.product.iphone_model.name }}" class="img-fluid rounded" style="max-height: 60px; object-fit: cover;">
-                                {% elif first_item.product.image %}
-                                    <img src="{{ first_item.product.image.url }}" alt="{{ first_item.product.iphone_model.name }}" class="img-fluid rounded" style="max-height: 60px; object-fit: cover;">
+                                {% if first_item.product and first_item.product.image_url %}
+                                    <img src="{{ first_item.product.image_url }}" alt="{{ first_item.product_name }} - {{ first_item.product_color }}" class="img-fluid rounded">
+                                {% elif first_item.product and first_item.product.cover_photo %}
+                                    <img src="{{ first_item.product.cover_photo.url }}" alt="{{ first_item.product_name }}" class="img-fluid rounded">
+                                {% elif first_item.product and first_item.product.image %}
+                                    <img src="{{ first_item.product.image.url }}" alt="{{ first_item.product_name }}" class="img-fluid rounded">
                                 {% else %}
-                                    <div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 60px; width: 60px;">
+                                    <div class="order-list-image-placeholder bg-light rounded d-flex align-items-center justify-content-center">
                                         <i class="fas fa-mobile-alt text-muted"></i>
                                     </div>
                                 {% endif %}
                             {% endwith %}
                         </div>
-                        <div class="col-3 col-md-3">
-                            <div class="d-flex flex-column">
-                                <strong class="text-primary">#{{ order.order_number }}</strong>
-                                <small class="text-muted">{{ order.created_at|date:"M j, Y" }}</small>
-                                <span class="badge {% if order.status == 'pending_payment' %}bg-warning{% elif order.status == 'paid' %}bg-info{% elif order.status == 'processing' %}bg-primary{% elif order.status == 'shipped' %}bg-success{% elif order.status == 'delivered' %}bg-success{% elif order.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %} mt-2" style="width: fit-content;">
-                                    {{ order.get_status_display }}
-                                </span>
-                            </div>
+                        <div class="col-3 col-md-3 order-list-meta">
+                            <strong class="text-primary order-list-number">Order #{{ order.order_number }}</strong>
+                            <small class="text-muted">{{ order.created_at|date:"M j, Y" }}</small>
+                            <span class="badge {% if order.status == 'pending_payment' %}bg-warning text-dark{% elif order.status == 'paid' %}bg-info text-dark{% elif order.status == 'processing' %}bg-primary{% elif order.status == 'shipped' %}bg-success{% elif order.status == 'delivered' %}bg-success{% elif order.status == 'cancelled' %}bg-danger{% else %}bg-secondary{% endif %} order-list-status">
+                                {{ order.get_status_display }}
+                            </span>
                         </div>
-                        <div class="col-3 col-md-4">
-                            <div class="small">
+                        <div class="col-3 col-md-4 order-list-items">
+                            <div class="small order-list-item-lines">
                                 {% for item in order.get_items %}
-                                <div class="mb-1">
-                                    {{ item.quantity }}x {{ item.product.iphone_model.name }}
-                                    <span class="text-muted">({{ item.product.color.name }})</span>
+                                <div class="order-list-item-line">
+                                    {{ item.quantity }}x {{ item.product_name|default:"Removed product" }}
+                                    <span class="text-muted">({{ item.product_color }} {{ item.product_storage }}{% if item.product_grade %}, Grade {{ item.product_grade }}{% endif %})</span>
                                 </div>
                                 {% endfor %}
                             </div>
                         </div>
-                        <div class="col-2 col-md-2 text-center">
+                        <div class="col-2 col-md-2 text-center order-list-total">
                             <strong class="text-primary">R{{ order.total_amount }}</strong>
                             <div class="small text-muted">{{ order.get_item_count }} item{% if order.get_item_count != 1 %}s{% endif %}</div>
                         </div>
-                        <div class="col-2 col-md-2 text-end">
+                        <div class="col-2 col-md-2 text-end order-list-actions">
                             <a href="{% url 'store:order_detail' order.id %}" class="btn btn-outline-primary btn-sm">
-                                View Details
+                                View Details <i class="fas fa-arrow-right ms-1" aria-hidden="true"></i>
                             </a>
                         </div>
                     </div>
@@ -67,7 +68,7 @@
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-5">
+    <div class="text-center py-5 order-list-empty">
         <i class="fas fa-shopping-bag fa-3x text-muted mb-3"></i>
         <h4>No orders yet</h4>
         <p class="text-muted mb-4">Start shopping to see your orders here.</p>
@@ -77,5 +78,170 @@
     </div>
     {% endif %}
 </div>
+
+<style>
+@media (max-width: 767.98px) {
+    .order-list-page {
+        padding-top: 1.25rem !important;
+    }
+
+    .order-list-heading h1 {
+        margin-bottom: 0.35rem !important;
+        font-size: 1.65rem;
+    }
+
+    .order-list-heading p {
+        margin-bottom: 1rem !important;
+        font-size: 0.9rem;
+    }
+
+    .order-list-card {
+        border: 1px solid #e5e9ef !important;
+        border-radius: 14px;
+        box-shadow: 0 3px 14px rgba(20, 32, 50, 0.07) !important;
+    }
+
+    .order-list-card .card-body {
+        padding: 0.85rem !important;
+    }
+
+    .order-list-row {
+        display: grid !important;
+        grid-template-columns: 58px minmax(0, 1fr) auto;
+        grid-template-areas:
+            "image meta total"
+            "items items items"
+            "actions actions actions";
+        align-items: start !important;
+        gap: 0.65rem 0.75rem;
+        width: 100%;
+        margin: 0;
+    }
+
+    .order-list-row > [class*="col-"] {
+        width: auto;
+        max-width: none;
+        padding: 0;
+    }
+
+    .order-list-image {
+        grid-area: image;
+    }
+
+    .order-list-image img,
+    .order-list-image-placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 58px;
+        height: 58px;
+        object-fit: contain;
+        border-radius: 10px !important;
+        background-color: #f3f5f8;
+    }
+
+    .order-list-meta {
+        grid-area: meta;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-width: 0;
+        gap: 0.15rem;
+    }
+
+    .order-list-number {
+        overflow-wrap: anywhere;
+        font-size: 0.95rem;
+    }
+
+    .order-list-meta small {
+        font-size: 0.78rem;
+    }
+
+    .order-list-status {
+        margin-top: 0.2rem;
+        white-space: normal;
+        text-align: left;
+    }
+
+    .order-list-total {
+        grid-area: total;
+        min-width: 82px;
+        text-align: right !important;
+        padding-top: 0.1rem !important;
+    }
+
+    .order-list-total strong {
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .order-list-total .small {
+        font-size: 0.72rem;
+    }
+
+    .order-list-items {
+        grid-area: items;
+        min-width: 0;
+        padding-top: 0.6rem !important;
+        border-top: 1px solid #edf0f3;
+    }
+
+    .order-list-item-lines {
+        display: grid;
+        gap: 0.35rem;
+        color: #293341;
+        line-height: 1.35;
+    }
+
+    .order-list-item-line {
+        overflow-wrap: anywhere;
+    }
+
+    .order-list-actions {
+        grid-area: actions;
+        width: 100% !important;
+        text-align: stretch !important;
+    }
+
+    .order-list-actions .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        width: 100%;
+        border-radius: 10px;
+        font-weight: 600;
+    }
+
+    .order-list-empty {
+        padding: 2rem 1rem !important;
+        border: 1px solid #e5e9ef;
+        border-radius: 16px;
+        background: #f8f9fb;
+    }
+}
+
+@media (max-width: 360px) {
+    .order-list-row {
+        grid-template-columns: 58px minmax(0, 1fr);
+        grid-template-areas:
+            "image meta"
+            "total total"
+            "items items"
+            "actions actions";
+    }
+
+    .order-list-total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        min-width: 0;
+        padding-top: 0.5rem !important;
+        border-top: 1px solid #edf0f3;
+        text-align: left !important;
+    }
+}
+</style>
 
 {% endblock %}

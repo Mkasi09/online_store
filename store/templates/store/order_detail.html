@@ -2,13 +2,13 @@
 
 
 
-{% block title %}Order #{{ order.order_number }} - iPhone Store{% endblock %}
+{% block title %}Order #{{ order.order_number }} - iPhone Plug{% endblock %}
 
 
 
 {% block content %}
 
-<div class="container py-5">
+<div class="container py-4 order-detail-page">
 
     <div class="row">
 
@@ -16,7 +16,7 @@
 
             <!-- Order Header -->
 
-            <div class="card shadow mb-4">
+            <div class="card shadow mb-4 order-detail-header">
 
                 <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
 
@@ -24,7 +24,7 @@
 
                         <h4 class="mb-0">Order #{{ order.order_number }}</h4>
 
-                        <small class="text-dark">Placed on {{ order.created_at|date:"F j, Y g:i A" }}</small>
+                        <small class="text-white-50">Placed on {{ order.created_at|date:"F j, Y g:i A" }}</small>
 
                     </div>
 
@@ -344,15 +344,18 @@
 
                     {% for item in order.get_items %}
 
-                    <div class="row align-items-center mb-3 pb-3 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div class="row align-items-center mb-3 pb-3 order-item-row {% if not forloop.last %}border-bottom{% endif %}">
 
-                        <div class="col-6 col-md-6">
+                        <div class="col-6 col-md-6 order-item-product">
 
                             <div class="d-flex align-items-center">
 
-                                {% if item.product.image %}
+                                {% if item.product and item.product.image_url %}
+                                <img src="{{ item.product.image_url }}" alt="{{ item.product_name }} - {{ item.product_color }}"
+                                     class="me-2 order-item-image" style="width: 60px; height: 60px; object-fit: contain; border-radius: 8px;">
+                                {% elif item.product and item.product.image %}
 
-                                <img src="{{ item.product.image.url }}" alt="{{ item.product.iphone_model.name }}" 
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}"
 
                                      class="me-2 order-item-image" style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
 
@@ -370,11 +373,12 @@
 
                                 <div class="flex-grow-1">
 
-                                    <h6 class="mb-0 order-item-title">{{ item.product.iphone_model.name }}</h6>
+                                    <h6 class="mb-0 order-item-title">{{ item.product_name|default:"Removed product" }}</h6>
 
                                     <small class="text-muted order-item-details">
 
-                                        {{ item.product.color.name }} {{ item.product.storage }}
+                                        {{ item.product_color }} {{ item.product_storage }}
+                                        {% if item.product_grade %}Grade {{ item.product_grade }}{% endif %}
 
                                     </small>
 
@@ -384,7 +388,7 @@
 
                         </div>
 
-                        <div class="col-3 col-md-3 text-center">
+                        <div class="col-3 col-md-3 text-center order-item-quantity">
 
                             <div class="text-muted order-item-label">Qty</div>
 
@@ -392,7 +396,7 @@
 
                         </div>
 
-                        <div class="col-3 col-md-3 text-end">
+                        <div class="col-3 col-md-3 text-end order-item-price">
 
                             <div class="text-muted order-item-label">Price</div>
 
@@ -436,23 +440,22 @@
 
                                     <span>Subtotal ({{ order.get_item_count }} items)</span>
 
-                                    <span>R{{ order.total_amount }}</span>
+                                    <span>R{% if order.subtotal_amount %}{{ order.subtotal_amount }}{% else %}{{ order.total_amount }}{% endif %}</span>
 
                                 </div>
+
+                                {% if order.discount_amount %}
+                                <div class="d-flex justify-content-between text-success">
+                                    <span>Discount{% if order.discount_code %} ({{ order.discount_code }}){% endif %}</span>
+                                    <span>-R{{ order.discount_amount }}</span>
+                                </div>
+                                {% endif %}
 
                                 <div class="d-flex justify-content-between text-success">
 
                                     <span><i class="fas fa-truck me-1"></i>Shipping</span>
 
                                     <span>FREE</span>
-
-                                </div>
-
-                                <div class="d-flex justify-content-between text-dark">
-
-                                    <span>Tax</span>
-
-                                    <span>Included</span>
 
                                 </div>
 
@@ -490,7 +493,7 @@
 
             <!-- Actions -->
 
-            <div class="text-center">
+            <div class="text-center order-detail-actions">
 
                 <a href="{% url 'store:order_list' %}" class="btn btn-outline-primary me-2">
 
@@ -918,6 +921,228 @@
 
     }
 
+}
+
+@media (max-width: 767.98px) {
+    .order-detail-page {
+        padding: 1rem 12px 2rem !important;
+    }
+
+    .order-detail-page .card {
+        overflow: hidden;
+        border: 1px solid #e4e9ef;
+        border-radius: 14px;
+        box-shadow: 0 3px 14px rgba(20, 32, 50, 0.07);
+    }
+
+    .order-detail-page .card-header {
+        padding: 0.85rem 1rem;
+    }
+
+    .order-detail-page .card-body {
+        padding: 1rem;
+    }
+
+    .order-detail-header .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.55rem;
+    }
+
+    .order-detail-header .card-header h4 {
+        font-size: 1.05rem;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .order-detail-header .card-header .badge {
+        font-size: 0.8rem;
+        white-space: normal;
+    }
+
+    .order-detail-header .card-body > .row {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+    }
+
+    .order-detail-header .card-body > .row > .col-md-6 {
+        width: 100%;
+    }
+
+    .order-detail-header .card-body > .row > .col-md-6 + .col-md-6 {
+        padding-top: 0.8rem;
+        border-top: 1px solid #edf0f3;
+    }
+
+    .order-detail-page .progress-timeline {
+        margin: 0.25rem 0 0;
+    }
+
+    .order-detail-page .progress-track {
+        display: none;
+    }
+
+    .order-detail-page .progress-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .order-detail-page .progress-step {
+        display: grid;
+        grid-template-columns: 32px minmax(0, 1fr);
+        align-items: start;
+        gap: 0.75rem;
+        width: 100%;
+        min-height: 52px;
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 0 0 0.75rem;
+        text-align: left;
+    }
+
+    .order-detail-page .progress-step:not(:last-child)::after {
+        display: block;
+        content: "";
+        position: absolute;
+        top: 34px;
+        left: 15px;
+        right: auto;
+        width: 2px;
+        height: calc(100% - 35px);
+        background: #d7e0e9;
+        font-size: 0;
+        z-index: 0;
+    }
+
+    .order-detail-page .step-marker {
+        grid-column: 1;
+        grid-row: 1;
+        position: relative;
+        z-index: 1;
+        width: 32px;
+        height: 32px;
+        margin: 0;
+        font-size: 0.75rem;
+    }
+
+    .order-detail-page .step-content {
+        grid-column: 2;
+        grid-row: 1;
+        min-width: 0;
+        padding-top: 0.1rem;
+    }
+
+    .order-detail-page .step-content h6 {
+        margin-bottom: 0.2rem;
+        font-size: 0.88rem;
+    }
+
+    .order-detail-page .step-content small {
+        font-size: 0.76rem;
+        line-height: 1.35;
+    }
+
+    .order-detail-page .order-item-row {
+        display: grid !important;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "product product"
+            "quantity price";
+        align-items: center !important;
+        gap: 0.65rem 0.5rem;
+        width: 100%;
+        margin: 0;
+        padding: 0.85rem 0;
+    }
+
+    .order-detail-page .order-item-row > [class*="col-"] {
+        width: auto;
+        max-width: none;
+        padding: 0;
+    }
+
+    .order-detail-page .order-item-product {
+        grid-area: product;
+        min-width: 0;
+    }
+
+    .order-detail-page .order-item-product > .d-flex {
+        min-width: 0;
+        gap: 0.65rem;
+    }
+
+    .order-detail-page .order-item-image {
+        width: 50px !important;
+        height: 50px !important;
+        flex: 0 0 50px;
+        margin-right: 0 !important;
+        border-radius: 10px !important;
+        background-color: #f3f5f8;
+    }
+
+    .order-detail-page .order-item-product .flex-grow-1 {
+        min-width: 0;
+    }
+
+    .order-detail-page .order-item-title {
+        font-size: 0.9rem;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+    }
+
+    .order-detail-page .order-item-details {
+        font-size: 0.78rem;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .order-detail-page .order-item-quantity {
+        grid-area: quantity;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 0.45rem;
+        text-align: left !important;
+    }
+
+    .order-detail-page .order-item-price {
+        grid-area: price;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 0.45rem;
+    }
+
+    .order-detail-page .order-item-label {
+        margin: 0;
+        font-size: 0.72rem;
+        letter-spacing: 0;
+        text-transform: none;
+    }
+
+    .order-detail-page .order-item-value {
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .order-detail-page .order-detail-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .order-detail-page .order-detail-actions .btn {
+        width: 100%;
+        min-height: 44px;
+        margin: 0 !important;
+    }
+
+    .order-detail-page .alert {
+        font-size: 0.88rem;
+        line-height: 1.5;
+    }
 }
 
 </style>

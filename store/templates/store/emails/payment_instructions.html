@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Order {{ order_number }} payment instructions</title></head>
+<body style="margin:0;padding:0;background:#f3f6f8;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f3f6f8;">
+    <tr><td align="center" style="padding:24px;">
+      <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:#fff;border-radius:10px;overflow:hidden;">
+        <tr><td align="center" style="padding:24px;background:#081c2c;"><img src="{{ logo_url }}" width="180" height="72" alt="iPhone Plug logo" style="display:block;width:180px;height:auto;border:0;"></td></tr>
+        <tr><td style="padding:32px;">
+          <h1 style="margin:0 0 16px;font-size:24px;color:#081c2c;">Payment instructions</h1>
+          <p style="margin:0 0 20px;font-size:16px;">Hi {{ customer_name }},</p>
+          <p style="margin:0 0 20px;font-size:16px;">Thank you for your order <strong>#{{ order_number }}</strong>.</p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;border:1px solid #dce4ea;border-radius:8px;"><tr><td style="padding:16px;background:#eef7fb;"><p style="margin:0 0 4px;font-size:14px;color:#526171;">Amount due</p><p style="margin:0;font-size:22px;font-weight:bold;color:#081c2c;">R{{ amount_due }}</p></td></tr></table>
+          <h2 style="margin:0 0 12px;font-size:18px;color:#081c2c;">Banking details</h2>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 24px;border-collapse:collapse;">
+            <tr><td style="padding:8px 0;border-bottom:1px solid #edf1f3;">Bank</td><td align="right" style="padding:8px 0;border-bottom:1px solid #edf1f3;"><strong>{{ bank_name }}</strong></td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #edf1f3;">Account name</td><td align="right" style="padding:8px 0;border-bottom:1px solid #edf1f3;"><strong>{{ account_name }}</strong></td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #edf1f3;">Account number</td><td align="right" style="padding:8px 0;border-bottom:1px solid #edf1f3;"><strong>{{ account_number }}</strong></td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #edf1f3;">Branch code</td><td align="right" style="padding:8px 0;border-bottom:1px solid #edf1f3;"><strong>{{ branch_code }}</strong></td></tr>
+            <tr><td style="padding:8px 0;border-bottom:1px solid #edf1f3;">Account type</td><td align="right" style="padding:8px 0;border-bottom:1px solid #edf1f3;"><strong>{{ account_type }}</strong></td></tr>
+            <tr><td style="padding:8px 0;">Reference</td><td align="right" style="padding:8px 0;"><strong>{{ order_number }}</strong></td></tr>
+          </table>
+          <p style="margin:0 0 12px;font-size:16px;">After making payment, please send proof of payment:</p>
+          <p style="margin:0 0 4px;font-size:16px;">Email: <a href="mailto:{{ proof_email }}" style="color:#087ea4;">{{ proof_email }}</a></p>
+          <p style="margin:0 0 24px;font-size:16px;">WhatsApp: <strong>{{ whatsapp }}</strong></p>
+          <p style="margin:0 0 24px;font-size:16px;">Your order status will be updated to <strong>Processing</strong> once proof of payment has been received and confirmed.</p>
+          <table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="border-radius:6px;background:#087ea4;"><a href="{{ order_url }}" style="display:inline-block;padding:12px 20px;color:#fff;text-decoration:none;font-weight:bold;">View your order</a></td></tr></table>
+          <p style="margin:24px 0 0;font-size:14px;color:#526171;">Thank you,<br><strong>iPhone Plug</strong></p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

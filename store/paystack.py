@@ -1,5 +1,5 @@
 """
-Paystack Payment Gateway Integration for iPhone Store
+Paystack Payment Gateway Integration for iPhone Plug
 """
 
 import json

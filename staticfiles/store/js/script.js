@@ -1,4 +1,4 @@
-// Custom JavaScript for iPhone Store
+// Custom JavaScript for iPhone Plug
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize cart functionality

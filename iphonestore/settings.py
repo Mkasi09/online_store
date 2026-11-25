@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 import os
+from datetime import date
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -73,6 +74,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'store.context_processors.checkout_promotions',
             ],
         },
     },
@@ -131,7 +133,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
@@ -139,15 +141,23 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Checkout promo codes map to a percentage and an inclusive expiration date.
+CHECKOUT_DISCOUNT_CODES = {
+    'PLUG20': {
+        'percent': 20,
+        'valid_until': date(2026, 12, 31),
+    },
+}
+
 # Manual EFT / proof of payment instructions
 # ==========================================
 # Update these values with the store's real banking and contact details.
-ORDER_PAYMENT_BANK_NAME = 'Tyebank'
-ORDER_PAYMENT_ACCOUNT_NAME = 'iPhone Store'
-ORDER_PAYMENT_ACCOUNT_NUMBER = '5106 0564 069'
-ORDER_PAYMENT_BRANCH_CODE = '678910'
+ORDER_PAYMENT_BANK_NAME = 'FNB'
+ORDER_PAYMENT_ACCOUNT_NAME = 'iPhone Plug'
+ORDER_PAYMENT_ACCOUNT_NUMBER = '6316 3330 475'
+ORDER_PAYMENT_BRANCH_CODE = '250655'
 ORDER_PAYMENT_ACCOUNT_TYPE = 'Current Account'
-ORDER_PAYMENT_PROOF_EMAIL = 'iphonestorequaries@gmail.com'
+ORDER_PAYMENT_PROOF_EMAIL = 'orders@iphoneplugs.co.za'
 ORDER_PAYMENT_WHATSAPP = '0688833737'
 
 # Email configuration
@@ -158,12 +168,13 @@ EMAIL_USE_TLS = True
 EMAIL_TIMEOUT = 8
 EMAIL_HOST_USER = 'iphonestorequaries@gmail.com'
 EMAIL_HOST_PASSWORD = 'sykyclljoaxbednp'
-DEFAULT_FROM_EMAIL = 'iPhone Store <iphonestorequaries@gmail.com>'
+DEFAULT_FROM_EMAIL = 'iPhone Plug <iphonestorequaries@gmail.com>'
 
 # Render blocks SMTP ports on many services. Use Brevo's HTTPS API when this is set.
 BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
 BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL).strip()
-BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Store').strip()
+BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Plug').strip()
+EMAIL_LOGO_URL = os.environ.get('EMAIL_LOGO_URL', '').strip()
 
 
 # PayFast Payment Gateway Configuration

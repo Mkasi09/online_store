@@ -1,0 +1,24 @@
+Hi {{ customer_name }},
+
+Thank you for your order #{{ order_number }}.
+
+Amount due: R{{ amount_due }}
+
+Please pay using the banking details below:
+Bank: {{ bank_name }}
+Account name: {{ account_name }}
+Account number: {{ account_number }}
+Branch code: {{ branch_code }}
+Account type: {{ account_type }}
+Reference: {{ order_number }}
+
+After making payment, please send proof of payment by email or WhatsApp:
+Email: {{ proof_email }}
+WhatsApp: {{ whatsapp }}
+
+Your order status will be updated to Processing once proof of payment has been received and confirmed.
+
+View your order: {{ order_url }}
+
+Thank you,
+iPhone Plug
