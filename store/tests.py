@@ -82,6 +82,7 @@ class EmailConfigurationTests(SimpleTestCase):
 
 
 class EmailSendingTests(SimpleTestCase):
+    @override_settings(BREVO_API_KEY='')
     def test_manual_payment_email_uses_django_mail_with_inline_logo(self):
         from store.views import send_manual_payment_email
 
@@ -108,6 +109,41 @@ class EmailSendingTests(SimpleTestCase):
         self.assertEqual(html_context['logo_url'], 'cid:iphone-plug-logo')
         email_class.return_value.attach_alternative.assert_called_once_with('html body', 'text/html')
         email_class.return_value.send.assert_called_once_with(fail_silently=False)
+
+    @override_settings(
+        BREVO_API_KEY='configured-key',
+        BREVO_SENDER_EMAIL='orders@example.test',
+        BREVO_SENDER_NAME='iPhone Plug',
+        EMAIL_LOGO_URL='https://store.example.test/logo.png',
+    )
+    def test_manual_payment_email_uses_brevo_when_configured(self):
+        from store.views import send_manual_payment_email
+
+        order = Mock(
+            user=None,
+            order_number='ORDER-123',
+            total_amount=Decimal('125.00'),
+            email='buyer@example.com',
+        )
+        order.get_absolute_url.return_value = '/orders/ORDER-123/'
+        request = Mock()
+        request.build_absolute_uri.side_effect = lambda path: f'https://store.example.test{path}'
+
+        with (
+            patch('store.views.render_to_string', side_effect=['plain body', 'html body']) as render,
+            patch('store.views.send_brevo_email', return_value=True) as send_brevo,
+            patch('store.views.EmailMultiAlternatives') as email_class,
+        ):
+            self.assertTrue(send_manual_payment_email(order, request))
+
+        send_brevo.assert_called_once_with(
+            'Order #ORDER-123 payment instructions',
+            'plain body',
+            'html body',
+            order.email,
+        )
+        self.assertEqual(render.call_args_list[1].args[1]['logo_url'], 'https://store.example.test/logo.png')
+        email_class.assert_not_called()
 
 
 class CatalogReplacementTests(TestCase):

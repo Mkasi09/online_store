@@ -141,7 +141,10 @@ from .payfast import PayFastPayment, verify_payfast_signature
 
 
 
+import json
 import logging
+import urllib.error
+import urllib.request
 
 
 
@@ -162,11 +165,47 @@ from datetime import datetime, timedelta
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
+from django.templatetags.static import static
 from email.mime.image import MIMEImage
 from pathlib import Path
 
 
 logger = logging.getLogger(__name__)
+
+
+def send_brevo_email(subject, text_message, html_message, recipient_email):
+    """Send transactional email through Brevo's HTTPS API."""
+    payload = {
+        'sender': {
+            'name': settings.BREVO_SENDER_NAME,
+            'email': settings.BREVO_SENDER_EMAIL,
+        },
+        'to': [{'email': recipient_email}],
+        'subject': subject,
+        'textContent': text_message,
+        'htmlContent': html_message,
+        'replyTo': {
+            'email': settings.ORDER_PAYMENT_PROOF_EMAIL,
+            'name': 'iPhone Plug',
+        },
+    }
+    request = urllib.request.Request(
+        'https://api.brevo.com/v3/smtp/email',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={
+            'api-key': settings.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=12) as response:
+            return 200 <= response.status < 300
+    except urllib.error.HTTPError as error:
+        error_body = error.read().decode('utf-8', errors='replace')
+        logger.error("Brevo email API error %s: %s", error.code, error_body)
+        raise
 
 
 
@@ -2392,14 +2431,20 @@ def send_manual_payment_email(order, request):
             'whatsapp': whatsapp,
             'order_url': order_url,
         }
+        logo_url = settings.EMAIL_LOGO_URL or request.build_absolute_uri(
+            static('store/img/iphone-plug-logo.png')
+        )
 
         text_message = render_to_string('store/emails/payment_instructions.txt', context)
         html_message = render_to_string(
             'store/emails/payment_instructions.html',
-            {**context, 'logo_url': 'cid:iphone-plug-logo'},
+            {**context, 'logo_url': logo_url if settings.BREVO_API_KEY else 'cid:iphone-plug-logo'},
         )
 
         subject = f"Order #{order.order_number} payment instructions"
+        if settings.BREVO_API_KEY:
+            return send_brevo_email(subject, text_message, html_message, order.email)
+
         email = EmailMultiAlternatives(
             subject=subject,
             body=text_message,
