@@ -2060,28 +2060,9 @@ def custom_login(request):
 
 
             else:
-
-
-
-
-
-
-
                 error_message = 'Invalid username or password.'
 
-
-
-
-
-
-
-                
-
-
-
-
-
-
+                form.add_error(None, error_message)
 
                 # Check if this is an AJAX request (from modal)
 
@@ -2115,22 +2096,7 @@ def custom_login(request):
 
 
 
-                messages.error(request, error_message)
-
-
-
-
-
-
-
         else:
-
-
-
-
-
-
-
             error_message = 'Invalid username or password.'
 
 
@@ -2180,14 +2146,6 @@ def custom_login(request):
 
 
             
-
-
-
-
-
-
-
-            messages.error(request, error_message)
 
 
 

@@ -82,6 +82,49 @@ class EmailConfigurationTests(SimpleTestCase):
             _email_config({'EMAIL_USE_TLS': 'sometimes'})
 
 
+class AuthenticationFormErrorTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username='existing-user',
+            password='Correct-password-123',
+        )
+
+    def test_invalid_login_renders_error_in_form_without_message_notification(self):
+        response = self.client.post(reverse('store:login'), {
+            'username': self.user.username,
+            'password': 'incorrect-password',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Please enter a correct username and password')
+        self.assertEqual(list(response.context['messages']), [])
+
+    def test_ajax_login_returns_errors_for_inline_form_display(self):
+        response = self.client.post(
+            reverse('store:login'),
+            {'username': self.user.username, 'password': 'incorrect-password'},
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()['success'])
+        self.assertIn('__all__', response.json()['errors'])
+
+    def test_registration_field_error_renders_inline_without_message_notification(self):
+        response = self.client.post(reverse('store:register'), {
+            'username': self.user.username,
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'new-user@example.test',
+            'password1': 'Safe-password-123!',
+            'password2': 'Safe-password-123!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'A user with that username already exists.')
+        self.assertEqual(list(response.context['messages']), [])
+
+
 class EmailSendingTests(SimpleTestCase):
     @override_settings(BREVO_API_KEY='')
     def test_manual_payment_email_uses_django_mail_with_inline_logo(self):

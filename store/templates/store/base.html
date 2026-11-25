@@ -219,6 +219,7 @@
                     
                     <form id="loginForm">
                         {% csrf_token %}
+                        <div class="auth-form-errors alert alert-danger d-none" role="alert" aria-live="assertive"></div>
                         <div class="mb-3">
                             <label for="loginUsername" class="form-label text-white">Username or Email</label>
                             <input type="text" class="form-control bg-dark text-white border-secondary" id="loginUsername" name="username" required>
@@ -259,6 +260,7 @@
                     
                     <form id="signupForm">
                         {% csrf_token %}
+                        <div class="auth-form-errors alert alert-danger d-none" role="alert" aria-live="assertive"></div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label for="signupFirstName" class="form-label text-white">First Name</label>
@@ -553,9 +555,29 @@
     </style>
     
     <script>
+        function showAuthFormErrors(form, messages) {
+            const errorContainer = form.querySelector('.auth-form-errors');
+            errorContainer.textContent = messages.join(' ');
+            errorContainer.classList.toggle('d-none', messages.length === 0);
+        }
+
+        function getAuthErrorMessages(data, fallback) {
+            const messages = data.errors
+                ? Object.values(data.errors).flat()
+                : [];
+            if (!messages.length && data.error) {
+                messages.push(data.error);
+            }
+            if (!messages.length && fallback) {
+                messages.push(fallback);
+            }
+            return messages;
+        }
+
         // Handle login form submission
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            showAuthFormErrors(this, []);
             const formData = new FormData(this);
             
             fetch('/login/', {
@@ -571,23 +593,19 @@
                 if (data.success) {
                     location.reload();
                 } else {
-                    // Show specific error messages if available
-                    let errorMessage = data.error || 'Login failed';
-                    if (data.errors) {
-                        errorMessage = Object.values(data.errors).flat().join(', ');
-                    }
-                    alert(errorMessage);
+                    showAuthFormErrors(this, getAuthErrorMessages(data, 'Login failed'));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Login failed. Please try again.');
+                showAuthFormErrors(this, ['Login failed. Please try again.']);
             });
         });
 
         // Handle signup form submission
         document.getElementById('signupForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            showAuthFormErrors(this, []);
             const formData = new FormData(this);
             
             // Check if passwords match
@@ -595,7 +613,7 @@
             const confirmPassword = formData.get('password2');
             
             if (password !== confirmPassword) {
-                alert('Passwords do not match');
+                showAuthFormErrors(this, ['Passwords do not match']);
                 return;
             }
             
@@ -614,17 +632,12 @@
                     bootstrap.Modal.getInstance(document.getElementById('signupModal')).hide();
                     new bootstrap.Modal(document.getElementById('loginModal')).show();
                 } else {
-                    // Show specific error messages if available
-                    let errorMessage = data.error || 'Registration failed';
-                    if (data.errors) {
-                        errorMessage = Object.values(data.errors).flat().join(', ');
-                    }
-                    alert(errorMessage);
+                    showAuthFormErrors(this, getAuthErrorMessages(data, 'Registration failed'));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Registration failed. Please try again.');
+                showAuthFormErrors(this, ['Registration failed. Please try again.']);
             });
         });
     </script>
