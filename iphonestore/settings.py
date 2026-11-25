@@ -31,8 +31,13 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['10.10.21.240', '127.0.0.1','10.10.19.163','10.10.23.58', 'localhost', '*', 'beb5-102-132-150-131.ngrok-free.app', 'd217-102-132-150-131.ngrok-free.app']
 
-# CSRF Trusted Origins for ngrok
-CSRF_TRUSTED_ORIGINS = ['https://d217-102-132-150-131.ngrok-free.app', 'https://beb5-102-132-150-131.ngrok-free.app']
+# CSRF trusted origins for production and ngrok
+CSRF_TRUSTED_ORIGINS = [
+    'https://d217-102-132-150-131.ngrok-free.app',
+    'https://beb5-102-132-150-131.ngrok-free.app',
+    'https://www.iphoneplugs.co.za',
+    'https://iphoneplugs.co.za',
+]
 
 # Authentication settings
 LOGIN_URL = 'store:login'
