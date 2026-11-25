@@ -1,7 +1,8 @@
+import json
 import random
 from datetime import date
 from decimal import Decimal
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -112,9 +113,9 @@ class EmailSendingTests(SimpleTestCase):
 
     @override_settings(
         BREVO_API_KEY='configured-key',
-        BREVO_SENDER_EMAIL='orders@example.test',
         BREVO_SENDER_NAME='iPhone Plug',
         EMAIL_LOGO_URL='https://store.example.test/logo.png',
+        EMAIL_HOST_USER='store-account@gmail.com',
     )
     def test_manual_payment_email_uses_brevo_when_configured(self):
         from store.views import send_manual_payment_email
@@ -144,6 +145,32 @@ class EmailSendingTests(SimpleTestCase):
         )
         self.assertEqual(render.call_args_list[1].args[1]['logo_url'], 'https://store.example.test/logo.png')
         email_class.assert_not_called()
+
+    @override_settings(
+        BREVO_API_KEY='configured-key',
+        BREVO_SENDER_NAME='iPhone Plug',
+        EMAIL_HOST_USER='store-account@gmail.com',
+        ORDER_PAYMENT_PROOF_EMAIL='orders@example.test',
+    )
+    def test_brevo_sender_uses_gmail_account_and_keeps_payment_contact_as_reply_to(self):
+        from store.views import send_brevo_email
+
+        response = Mock(status=201)
+        urlopen = MagicMock()
+        urlopen.return_value.__enter__.return_value = response
+
+        with patch('store.views.urllib.request.urlopen', urlopen):
+            self.assertTrue(send_brevo_email(
+                'Order payment instructions',
+                'plain body',
+                'html body',
+                'buyer@example.test',
+            ))
+
+        brevo_payload = json.loads(urlopen.call_args.args[0].data.decode('utf-8'))
+        self.assertEqual(brevo_payload['sender']['email'], 'store-account@gmail.com')
+        self.assertNotEqual(brevo_payload['sender']['email'], 'orders@example.test')
+        self.assertEqual(brevo_payload['replyTo']['email'], 'orders@example.test')
 
 
 class CatalogReplacementTests(TestCase):

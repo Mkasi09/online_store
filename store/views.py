@@ -178,7 +178,7 @@ def send_brevo_email(subject, text_message, html_message, recipient_email):
     payload = {
         'sender': {
             'name': settings.BREVO_SENDER_NAME,
-            'email': settings.BREVO_SENDER_EMAIL,
+            'email': settings.EMAIL_HOST_USER,
         },
         'to': [{'email': recipient_email}],
         'subject': subject,

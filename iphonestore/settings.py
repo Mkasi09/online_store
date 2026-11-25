@@ -213,7 +213,6 @@ DEFAULT_FROM_EMAIL = 'iPhone Plug <iphonestorequaries@gmail.com>'
 
 # Use the Brevo HTTPS API when configured; otherwise Django sends through Gmail SMTP.
 BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '').strip()
-BREVO_SENDER_EMAIL = os.environ.get('BREVO_SENDER_EMAIL', ORDER_PAYMENT_PROOF_EMAIL).strip()
 BREVO_SENDER_NAME = os.environ.get('BREVO_SENDER_NAME', 'iPhone Plug').strip()
 EMAIL_LOGO_URL = os.environ.get('EMAIL_LOGO_URL', '').strip()
 
