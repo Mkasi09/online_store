@@ -67,7 +67,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 
 
-from django.contrib.auth import login, authenticate, logout
+from django.contrib.auth import login, logout
 
 
 
@@ -99,7 +99,6 @@ from django.contrib.auth.models import User
 
 
 
-from django.contrib.auth.forms import AuthenticationForm
 
 
 
@@ -125,7 +124,11 @@ from .discounts import InvalidDiscountCode, calculate_checkout_discount
 
 
 
-from .forms import CustomUserCreationForm, ProductReviewForm
+from .forms import (
+    CustomUserCreationForm,
+    ProductReviewForm,
+    UsernameOrEmailAuthenticationForm,
+)
 
 
 
@@ -1947,7 +1950,7 @@ def custom_login(request):
 
 
 
-        form = AuthenticationForm(request, data=request.POST)
+        form = UsernameOrEmailAuthenticationForm(request, data=request.POST)
 
 
 
@@ -1979,7 +1982,7 @@ def custom_login(request):
 
 
 
-            user = authenticate(username=username, password=password)
+            user = form.get_user()
 
 
 
@@ -2161,7 +2164,7 @@ def custom_login(request):
 
 
 
-        form = AuthenticationForm()
+        form = UsernameOrEmailAuthenticationForm()
 
 
 

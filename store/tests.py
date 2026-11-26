@@ -136,8 +136,45 @@ class AuthenticationFormErrorTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
             username='existing-user',
+            email='existing@example.test',
             password='Correct-password-123',
         )
+
+    def test_user_can_log_in_with_username(self):
+        response = self.client.post(reverse('store:login'), {
+            'username': self.user.username,
+            'password': 'Correct-password-123',
+        })
+
+        self.assertRedirects(response, reverse('store:home'))
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        self.assertEqual(response.wsgi_request.user, self.user)
+
+    def test_user_can_log_in_with_case_insensitive_email(self):
+        response = self.client.post(reverse('store:login'), {
+            'username': 'EXISTING@example.test',
+            'password': 'Correct-password-123',
+        })
+
+        self.assertRedirects(response, reverse('store:home'))
+        self.assertTrue(response.wsgi_request.user.is_authenticated)
+        self.assertEqual(response.wsgi_request.user, self.user)
+
+    def test_duplicate_case_insensitive_emails_do_not_select_an_account(self):
+        User.objects.create_user(
+            username='another-user',
+            email='EXISTING@example.test',
+            password='Another-password-123',
+        )
+
+        response = self.client.post(reverse('store:login'), {
+            'username': 'existing@example.test',
+            'password': 'Correct-password-123',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Please enter a correct username and password')
+        self.assertFalse(response.wsgi_request.user.is_authenticated)
 
     def test_invalid_login_renders_error_in_form_without_message_notification(self):
         response = self.client.post(reverse('store:login'), {
