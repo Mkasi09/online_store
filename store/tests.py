@@ -1,6 +1,6 @@
 import json
 import random
-from datetime import date
+from datetime import date, datetime, timezone as datetime_timezone
 from decimal import Decimal
 from unittest.mock import MagicMock, Mock, patch
 
@@ -827,6 +827,22 @@ class ProductReviewTests(TestCase):
         self.assertContains(response, 'Real Customer')
         self.assertNotContains(response, 'Real.Customer')
         self.assertEqual(str(review), 'Real Customer - iPhone 13 (5/5)')
+
+    def test_product_detail_displays_review_date_in_south_africa_timezone(self):
+        review = ProductReview.objects.create(
+            product=self.product,
+            user=self.user,
+            rating=5,
+            comment='Excellent phone and fast delivery',
+            status='approved',
+        )
+        ProductReview.objects.filter(pk=review.pk).update(
+            created_at=datetime(2026, 11, 24, 23, 30, tzinfo=datetime_timezone.utc),
+        )
+
+        response = self.client.get(self.product.get_absolute_url())
+
+        self.assertContains(response, '25 Nov 2026')
 
     def test_product_detail_renders_star_form_and_approved_star_display(self):
         self.client.force_login(self.user)
