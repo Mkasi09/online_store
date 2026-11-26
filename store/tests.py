@@ -1,5 +1,7 @@
 import json
 import random
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from datetime import date, datetime, timezone as datetime_timezone
 from decimal import Decimal
 from unittest.mock import MagicMock, Mock, patch
@@ -10,7 +12,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-from iphonestore.settings import BASE_DIR, _database_config, _email_config
+from iphonestore.settings import BASE_DIR, _database_config, _email_config, _media_config
 from store.management.commands.populate_iphones import Command
 from store.discounts import InvalidDiscountCode, calculate_checkout_discount
 from store.models import (
@@ -23,6 +25,54 @@ from store.models import (
     iPhoneProduct,
     ProductReview,
 )
+
+
+class MediaConfigurationTests(SimpleTestCase):
+    def test_default_media_storage_uses_project_media_directory_without_production_serving(self):
+        media_root, serve_media = _media_config({})
+
+        self.assertEqual(media_root, BASE_DIR / 'media')
+        self.assertFalse(serve_media)
+
+    def test_media_storage_and_fallback_serving_can_be_configured_for_hcode(self):
+        with TemporaryDirectory() as directory:
+            media_root, serve_media = _media_config({
+                'MEDIA_ROOT': directory,
+                'SERVE_MEDIA_FILES': 'true',
+            })
+
+        self.assertEqual(media_root, Path(directory))
+        self.assertTrue(serve_media)
+
+    def test_invalid_media_serving_setting_is_rejected(self):
+        with self.assertRaisesMessage(ValueError, 'SERVE_MEDIA_FILES must be a boolean value.'):
+            _media_config({'SERVE_MEDIA_FILES': 'sometimes'})
+
+
+class MediaServingTests(SimpleTestCase):
+    def test_production_media_fallback_serves_files_from_configured_storage(self):
+        with TemporaryDirectory() as directory:
+            image_path = Path(directory) / 'iphone_images' / 'test-image.jpg'
+            image_path.parent.mkdir()
+            image_path.write_bytes(b'uploaded image')
+
+            with override_settings(
+                DEBUG=False,
+                MEDIA_ROOT=directory,
+                SERVE_MEDIA_FILES=True,
+            ):
+                response = self.client.get('/media/iphone_images/test-image.jpg')
+                try:
+                    self.assertEqual(response.status_code, 200)
+                    self.assertEqual(b''.join(response.streaming_content), b'uploaded image')
+                finally:
+                    response.close()
+
+    @override_settings(DEBUG=False, SERVE_MEDIA_FILES=False)
+    def test_production_media_fallback_is_disabled_by_default(self):
+        response = self.client.get('/media/iphone_images/missing-image.jpg')
+
+        self.assertEqual(response.status_code, 404)
 
 
 class DatabaseConfigurationTests(SimpleTestCase):

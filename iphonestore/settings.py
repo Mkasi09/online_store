@@ -174,7 +174,31 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+
+def _media_config(environ):
+    media_root = Path(environ.get('MEDIA_ROOT', str(BASE_DIR / 'media'))).expanduser()
+    if not media_root.is_absolute():
+        media_root = BASE_DIR / media_root
+
+    serve_media_value = environ.get('SERVE_MEDIA_FILES', 'false').strip().lower()
+    boolean_values = {
+        '1': True,
+        'true': True,
+        'yes': True,
+        'on': True,
+        '0': False,
+        'false': False,
+        'no': False,
+        'off': False,
+    }
+    if serve_media_value not in boolean_values:
+        raise ValueError('SERVE_MEDIA_FILES must be a boolean value.')
+
+    return media_root, boolean_values[serve_media_value]
+
+
+MEDIA_ROOT, SERVE_MEDIA_FILES = _media_config(os.environ)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

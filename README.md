@@ -79,6 +79,14 @@ A comprehensive online store for selling iPhones of all types from iPhone 6 to i
    - **Store Frontend**: http://127.0.0.1:8000/
    - **Admin Panel**: http://127.0.0.1:8000/admin/
 
+### Production media uploads (HCode)
+
+Uploaded product images are stored on disk, not in the database. `MEDIA_URL` remains `/media/`; `MEDIA_ROOT` defaults to the project `media` directory and can be set to an absolute path on a persistent HCode volume. The app expects the storage to retain the existing relative paths such as `iphone_images/` and `iphone_covers/`.
+
+In production, configure HCode's web server to map `/media/` to `MEDIA_ROOT`, and ensure the web server can read the files and the Django process can write uploads. The storage must persist across releases, restarts, and instance replacement. Preserve and transfer existing media files with their directory structure before changing storage; database file names are relative to `MEDIA_ROOT`.
+
+If HCode cannot map media URLs directly, set `SERVE_MEDIA_FILES=true` to enable Django's low-traffic fallback for `/media/`. This fallback is disabled by default; direct web-server or persistent object-storage serving is preferred for production.
+
 ### Test Users
 The following test accounts have been created for demonstration:
 
