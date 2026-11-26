@@ -848,8 +848,11 @@ class ProductReviewTests(TestCase):
         self.client.force_login(self.user)
         detail_before = self.client.get(self.product.get_absolute_url())
         self.assertContains(detail_before, 'class="container py-4 product-detail-page"')
-        self.assertContains(detail_before, 'href="#reviews"')
-        self.assertContains(detail_before, 'id="reviews"')
+        self.assertContains(detail_before, 'id="review-summary-trigger"')
+        self.assertContains(detail_before, 'aria-controls="reviews-details"')
+        self.assertContains(detail_before, 'aria-expanded="false"')
+        self.assertContains(detail_before, '<details id="reviews-details">')
+        self.assertContains(detail_before, 'No reviews yet')
         self.assertContains(detail_before, 'review-star-input')
         self.assertContains(detail_before, 'role="radiogroup"')
         self.assertContains(detail_before, 'aria-label="Choose a 1 to 5 star rating"')
@@ -864,6 +867,7 @@ class ProductReviewTests(TestCase):
         )
         detail = self.client.get(self.product.get_absolute_url())
         self.assertContains(detail, 'aria-label="4 out of 5 stars"')
+        self.assertContains(detail, '4.0 out of 5 · 1 review')
 
 
 class OrderScreenTests(TestCase):

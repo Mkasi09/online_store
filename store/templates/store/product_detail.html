@@ -34,7 +34,24 @@
         <div class="col-lg-6">
             <div class="mb-4">
                 <h1 class="display-5 fw-bold mb-3">{{ product.iphone_model.name }}</h1>
-                <a href="#reviews" class="btn btn-outline-primary btn-sm mb-3">View reviews</a>
+                <button type="button" id="review-summary-trigger" class="btn btn-outline-primary btn-sm review-summary-trigger mb-3"
+                        aria-controls="reviews-details" aria-expanded="false">
+                    {% widthratio review_summary.average_rating 1 1 as average_whole %}
+                    <span class="review-stars-display" aria-hidden="true">
+                        {% for star in "12345" %}
+                            {% if review_summary.review_count and forloop.counter <= average_whole|add:"0" %}
+                                <i class="fas fa-star"></i>
+                            {% else %}
+                                <i class="far fa-star"></i>
+                            {% endif %}
+                        {% endfor %}
+                    </span>
+                    {% if review_summary.review_count %}
+                        <span>{{ review_summary.average_rating|floatformat:1 }} out of 5 · {{ review_summary.review_count }} review{{ review_summary.review_count|pluralize }}</span>
+                    {% else %}
+                        <span>No reviews yet</span>
+                    {% endif %}
+                </button>
                 <div class="d-flex flex-wrap align-items-center mb-3 gap-2">
                     <span class="badge 
                         {% if product.condition == 'new' %}bg-primary
@@ -217,27 +234,12 @@
     </div>
 
     <section id="reviews" class="mt-5 review-section" aria-labelledby="reviews-heading">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-            <h3 id="reviews-heading" class="mb-0">Customer Reviews</h3>
-            {% if review_summary.review_count %}
-                <div class="review-summary text-end">
-                    {% widthratio review_summary.average_rating 1 1 as average_whole %}
-                    <div class="review-stars-display" role="img" aria-label="{{ review_summary.average_rating|floatformat:1 }} out of 5 stars">
-                        {% for star in "12345" %}
-                            {% if forloop.counter <= average_whole|add:"0" %}
-                                <i class="fas fa-star" aria-hidden="true"></i>
-                            {% else %}
-                                <i class="far fa-star" aria-hidden="true"></i>
-                            {% endif %}
-                        {% endfor %}
-                    </div>
-                    <strong>{{ review_summary.average_rating|floatformat:1 }} out of 5</strong>
-                    <div class="text-muted">{{ review_summary.review_count }} approved review{{ review_summary.review_count|pluralize }}</div>
-                </div>
-            {% else %}
-                <div class="text-muted">No approved reviews yet</div>
-            {% endif %}
-        </div>
+        <details id="reviews-details">
+            <summary class="review-accordion-summary">
+                <span id="reviews-heading" class="h3 mb-0" role="heading" aria-level="2">Customer Reviews</span>
+                <span class="text-muted">{{ review_summary.review_count }} review{{ review_summary.review_count|pluralize }}</span>
+            </summary>
+            <div class="review-accordion-content">
 
         {% if user.is_authenticated %}
             {% if user_review %}
@@ -307,6 +309,8 @@
                 {% endfor %}
             </div>
         {% endif %}
+            </div>
+        </details>
     </section>
 
     <!-- Related Products -->
@@ -410,6 +414,31 @@
 .review-section {
     border-top: 1px solid #dee2e6;
     padding-top: 1.5rem;
+    scroll-margin-top: 1rem;
+}
+
+.review-summary-trigger {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    max-width: 100%;
+    text-align: left;
+    white-space: normal;
+}
+
+.review-accordion-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.review-accordion-summary:focus-visible {
+    outline: 3px solid #93c5fd;
+    outline-offset: 3px;
 }
 
 .review-card,
@@ -744,6 +773,8 @@ body {
 document.addEventListener('DOMContentLoaded', function() {
     const quantityInputs = document.querySelectorAll('.quantity-input');
     const maxQuantity = parseInt('{{ product.stock_quantity }}');
+    const reviewSummaryTrigger = document.getElementById('review-summary-trigger');
+    const reviewsDetails = document.getElementById('reviews-details');
     
     quantityInputs.forEach(function(input) {
         input.addEventListener('change', function() {
@@ -764,6 +795,27 @@ document.addEventListener('DOMContentLoaded', function() {
             dot.style.backgroundColor = color;
         }
     });
+
+    if (reviewSummaryTrigger && reviewsDetails) {
+        const syncReviewExpandedState = function() {
+            reviewSummaryTrigger.setAttribute('aria-expanded', String(reviewsDetails.open));
+        };
+
+        reviewSummaryTrigger.addEventListener('click', function() {
+            reviewsDetails.open = !reviewsDetails.open;
+            syncReviewExpandedState();
+            if (reviewsDetails.open) {
+                const reviewsSummary = reviewsDetails.querySelector('summary');
+                const scrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                    ? 'auto'
+                    : 'smooth';
+                reviewsSummary.focus({ preventScroll: true });
+                reviewsDetails.scrollIntoView({ behavior: scrollBehavior, block: 'start' });
+            }
+        });
+        reviewsDetails.addEventListener('toggle', syncReviewExpandedState);
+        syncReviewExpandedState();
+    }
 });
 </script>
 {% endblock %}
