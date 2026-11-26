@@ -181,7 +181,7 @@ def _media_config(environ):
     if not media_root.is_absolute():
         media_root = BASE_DIR / media_root
 
-    serve_media_value = environ.get('SERVE_MEDIA_FILES', 'false').strip().lower()
+    serve_media_value = environ.get('SERVE_MEDIA_FILES', 'true').strip().lower()
     boolean_values = {
         '1': True,
         'true': True,
